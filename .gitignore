@@ -9,3 +9,5 @@ dist
 .lead-test-data
 .webhook-test-data
 .conversion-test-data
+server/data/private-documents
+.document-test-data

@@ -171,6 +171,37 @@ Commit changes.
 
 First append this exact prompt to PROMPTS.md.
 
+Implement LeadFlow document management.
+
+Create Document model:
+clientId, uploadedBy, filename, fileUrl,
+documentType, status, brokerageId, timestamps.
+
+Statuses:
+Pending
+Uploading
+Processing
+In Review
+Verified
+Failed
+
+Create secure document APIs for:
+upload
+list
+get
+update status
+delete
+
+Clients can access only their own documents.
+Advisors/admins can access documents belonging to their brokerage.
+
+Use a storage abstraction so storage can later be connected to S3 or another provider.
+
+Do not redesign the frontend.
+Test and commit.
+
+First append this exact prompt to PROMPTS.md.
+
 Implement an external lead webhook:
 
 POST /api/webhooks/leads

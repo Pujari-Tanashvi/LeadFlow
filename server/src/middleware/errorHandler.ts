@@ -19,6 +19,24 @@ export const errorHandler: ErrorRequestHandler = (
     }
   }
 
+  if (error && typeof error === "object" && "code" in error) {
+    if (error.code === "LIMIT_FILE_SIZE") {
+      response
+        .status(413)
+        .json({ error: "Document exceeds the 10 MB upload limit." });
+      return;
+    }
+    if (
+      error.code === "LIMIT_UNEXPECTED_FILE" ||
+      error.code === "LIMIT_FILE_COUNT"
+    ) {
+      response
+        .status(400)
+        .json({ error: "Upload exactly one file using the file field." });
+      return;
+    }
+  }
+
   console.error(error);
 
   if (error && typeof error === "object" && "statusCode" in error) {
@@ -29,6 +47,14 @@ export const errorHandler: ErrorRequestHandler = (
       });
       return;
     }
+  }
+
+  if (
+    error instanceof Error &&
+    error.message === "Only PDF, JPEG, PNG, and WebP documents are accepted."
+  ) {
+    response.status(415).json({ error: error.message });
+    return;
   }
 
   if (

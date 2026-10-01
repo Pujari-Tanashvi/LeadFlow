@@ -5,8 +5,11 @@ process.env.JWT_SECRET = "test-secret-that-is-long-enough-for-unit-tests";
 
 const { createAccessToken, hashPassword, verifyAccessToken, verifyPassword } =
   await import("../src/services/authService.js");
+const { Types } = await import("mongoose");
 const { BrokerageModel } = await import("../src/models/Brokerage.js");
 const { ClientModel } = await import("../src/models/Client.js");
+const { DocumentModel, DOCUMENT_STATUSES } =
+  await import("../src/models/Document.js");
 const { LeadModel } = await import("../src/models/Lead.js");
 const { UserModel } = await import("../src/models/User.js");
 const { brokerageFilter, canAccessBrokerage } =
@@ -17,6 +20,10 @@ const { normalizeEmail, normalizeLeadName, normalizePhone } =
   await import("../src/utils/leadIdentity.js");
 const { getLeadsMissingIdentityFilter } =
   await import("../src/services/leadIdentityService.js");
+const { documentScopeFilter } =
+  await import("../src/services/documentAccessService.js");
+const { canTransitionDocumentStatus } =
+  await import("../src/utils/documentStatus.js");
 const { parseExternalLeadInput } =
   await import("../src/utils/webhookLeadInput.js");
 const { webhookSecretMatches } =
@@ -168,6 +175,51 @@ describe("database model validation", () => {
 
     assert.ok(activity.validateSync()?.errors.fromStage);
     assert.ok(activity.validateSync()?.errors.toStage);
+  });
+
+  it("defines brokerage-indexed Document fields and statuses", () => {
+    const indexes = DocumentModel.schema
+      .indexes()
+      .map(([keys]) => Object.keys(keys).join(","));
+    const document = new DocumentModel({
+      clientId: new Types.ObjectId(),
+      uploadedBy: new Types.ObjectId(),
+      filename: "passport.pdf",
+      fileUrl: "/api/documents/doc-id/content",
+      storageKey: "00000000-0000-4000-8000-000000000000",
+      contentType: "application/pdf",
+      documentType: "Identity",
+      brokerageId: new Types.ObjectId(),
+    });
+
+    assert.deepEqual(DOCUMENT_STATUSES, [
+      "Pending",
+      "Uploading",
+      "Processing",
+      "In Review",
+      "Verified",
+      "Failed",
+    ]);
+    assert.ok(indexes.includes("brokerageId,clientId,createdAt"));
+    assert.equal(document.validateSync(), undefined);
+  });
+
+  it("allows valid document-status progressions only", () => {
+    assert.equal(canTransitionDocumentStatus("Pending", "Uploading"), true);
+    assert.equal(canTransitionDocumentStatus("Processing", "Verified"), true);
+    assert.equal(canTransitionDocumentStatus("Verified", "Pending"), false);
+    assert.equal(canTransitionDocumentStatus("Pending", "Verified"), false);
+  });
+
+  it("builds document filters with brokerage and optional client scope", () => {
+    const brokerageId = new Types.ObjectId("507f1f77bcf86cd799439011");
+    const clientId = new Types.ObjectId("507f1f77bcf86cd799439012");
+
+    assert.deepEqual(documentScopeFilter({ brokerageId }), { brokerageId });
+    assert.deepEqual(documentScopeFilter({ brokerageId, clientId }), {
+      brokerageId,
+      clientId,
+    });
   });
 });
 
