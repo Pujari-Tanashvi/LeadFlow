@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { BrokerageModel } from "../models/Brokerage.js";
 import { UserModel, type UserRole } from "../models/User.js";
 import {
@@ -94,12 +95,41 @@ export async function login(
     .select("+passwordHash")
     .exec();
 
-  if (!user || !(await verifyPassword(password, user.passwordHash))) {
+  if (
+    !user ||
+    user.passwordResetRequired ||
+    !(await verifyPassword(password, user.passwordHash))
+  ) {
     return null;
   }
 
   const safeUser = toAuthenticatedUser(user);
   return { user: safeUser, token: createAccessToken(safeUser.id) };
+}
+
+export async function activateClientAccount(
+  activationToken: string,
+  password: string,
+): Promise<boolean> {
+  const activationTokenHash = createHash("sha256")
+    .update(activationToken)
+    .digest("hex");
+  const passwordHash = await hashPassword(password);
+  const user = await UserModel.findOneAndUpdate(
+    {
+      role: "client",
+      passwordResetRequired: true,
+      activationTokenHash,
+      activationTokenExpiresAt: { $gt: new Date() },
+    },
+    {
+      $set: { passwordHash, passwordResetRequired: false },
+      $unset: { activationTokenHash: 1, activationTokenExpiresAt: 1 },
+    },
+    { new: true, runValidators: true },
+  ).exec();
+
+  return Boolean(user);
 }
 
 export async function getAuthenticatedUser(

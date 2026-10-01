@@ -1,4 +1,5 @@
 import type { RequestHandler } from "express";
+import { activateClientAccount } from "../services/userService.js";
 import {
   getAuthenticatedUser,
   login,
@@ -124,6 +125,54 @@ export const getCurrentUser: RequestHandler = async (
     }
 
     response.status(200).json({ user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const activateClient: RequestHandler = async (
+  request,
+  response,
+  next,
+) => {
+  if (!isRecord(request.body)) {
+    response.status(400).json({ error: "A JSON request body is required." });
+    return;
+  }
+
+  const { activationToken, password } = request.body;
+  if (
+    typeof activationToken !== "string" ||
+    activationToken.length < 32 ||
+    activationToken.length > 128
+  ) {
+    response
+      .status(400)
+      .json({ error: "A valid activation token is required." });
+    return;
+  }
+  if (typeof password !== "string" || password.length < 8) {
+    response
+      .status(400)
+      .json({ error: "Password must be at least 8 characters." });
+    return;
+  }
+  if (Buffer.byteLength(password, "utf8") > 72) {
+    response
+      .status(400)
+      .json({ error: "Password must be no more than 72 UTF-8 bytes." });
+    return;
+  }
+
+  try {
+    const activated = await activateClientAccount(activationToken, password);
+    if (!activated) {
+      response
+        .status(400)
+        .json({ error: "Activation token is invalid or expired." });
+      return;
+    }
+    response.status(204).end();
   } catch (error) {
     next(error);
   }

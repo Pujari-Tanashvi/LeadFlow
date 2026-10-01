@@ -34,6 +34,12 @@ const leadSchema = new Schema(
       ref: "User",
       default: null,
     },
+    convertedClientId: {
+      type: Schema.Types.ObjectId,
+      ref: "Client",
+      default: null,
+    },
+    convertedAt: { type: Date, default: null },
     stage: { type: String, enum: LEAD_STAGES, default: "New", required: true },
     brokerageId: {
       type: Schema.Types.ObjectId,

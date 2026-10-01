@@ -6,6 +6,7 @@ process.env.JWT_SECRET = "test-secret-that-is-long-enough-for-unit-tests";
 const { createAccessToken, hashPassword, verifyAccessToken, verifyPassword } =
   await import("../src/services/authService.js");
 const { BrokerageModel } = await import("../src/models/Brokerage.js");
+const { ClientModel } = await import("../src/models/Client.js");
 const { LeadModel } = await import("../src/models/Lead.js");
 const { UserModel } = await import("../src/models/User.js");
 const { brokerageFilter, canAccessBrokerage } =
@@ -112,6 +113,61 @@ describe("database model validation", () => {
     assert.ok(indexes.includes("brokerageId,emailNormalized"));
     assert.ok(indexes.includes("brokerageId,phoneNormalized"));
     assert.ok(indexes.includes("brokerageId,nameNormalized,phoneNormalized"));
+  });
+
+  it("enforces one client profile per brokerage account and email", () => {
+    const indexes = ClientModel.schema
+      .indexes()
+      .map(([keys]) => Object.keys(keys).join(","));
+
+    assert.ok(indexes.includes("brokerageId,emailNormalized"));
+    assert.ok(indexes.includes("brokerageId,userId"));
+    assert.ok(UserModel.schema.path("passwordResetRequired"));
+    assert.ok(
+      UserModel.schema
+        .indexes()
+        .some(
+          ([keys]) => Object.keys(keys).join(",") === "activationTokenHash",
+        ),
+    );
+
+    const invitedClient = new UserModel({
+      email: "invited.client@example.com",
+      fullName: "Invited Client",
+      passwordHash: "temporary-password-hash",
+      passwordResetRequired: true,
+      role: "client",
+      brokerageId: "507f1f77bcf86cd799439011",
+    });
+    assert.equal(invitedClient.validateSync(), undefined);
+  });
+
+  it("allows conversion activities to link a client while retaining stage history", async () => {
+    const { ActivityModel } = await import("../src/models/Activity.js");
+    const { Types } = await import("mongoose");
+    const activity = new ActivityModel({
+      leadId: new Types.ObjectId(),
+      brokerageId: new Types.ObjectId(),
+      actorId: new Types.ObjectId(),
+      clientId: new Types.ObjectId(),
+      type: "lead_converted",
+    });
+
+    assert.equal(activity.validateSync(), undefined);
+  });
+
+  it("requires both stages on stage-change Activities", async () => {
+    const { ActivityModel } = await import("../src/models/Activity.js");
+    const { Types } = await import("mongoose");
+    const activity = new ActivityModel({
+      leadId: new Types.ObjectId(),
+      brokerageId: new Types.ObjectId(),
+      actorId: new Types.ObjectId(),
+      type: "lead_stage_changed",
+    });
+
+    assert.ok(activity.validateSync()?.errors.fromStage);
+    assert.ok(activity.validateSync()?.errors.toStage);
   });
 });
 

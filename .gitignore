@@ -8,3 +8,4 @@ dist
 .test-mongo-data
 .lead-test-data
 .webhook-test-data
+.conversion-test-data

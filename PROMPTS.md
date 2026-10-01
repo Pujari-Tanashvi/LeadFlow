@@ -144,6 +144,33 @@ Commit changes.
 
 First append this exact prompt to PROMPTS.md.
 
+Implement LeadFlow lead-to-client conversion.
+
+Create Client model.
+
+Add:
+POST /api/leads/:id/convert
+
+When converted:
+
+- create the client
+- create a client User account
+- preserve lead history
+- prevent duplicate client accounts
+- associate client with brokerage
+- associate client with advisor
+- update lead status
+
+Use a secure temporary-password/reset flow.
+
+Enforce brokerage isolation.
+
+Do not redesign the UI.
+Test and fix errors.
+Commit changes.
+
+First append this exact prompt to PROMPTS.md.
+
 Implement an external lead webhook:
 
 POST /api/webhooks/leads

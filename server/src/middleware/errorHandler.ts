@@ -37,9 +37,9 @@ export const errorHandler: ErrorRequestHandler = (
     "code" in error &&
     error.code === 11000
   ) {
-    response
-      .status(409)
-      .json({ error: "An account with this email already exists." });
+    response.status(409).json({
+      error: "A record with these unique fields already exists.",
+    });
     return;
   }
 
