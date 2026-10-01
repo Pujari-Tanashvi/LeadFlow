@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "dev:server": "tsx watch server/src/index.ts",
-    "test": "tsx --test server/test/auth.test.ts",
+    "test": "tsx --test server/test/*.test.ts",
     "build": "vite build && npm run build:server",
     "build:server": "tsc -p server/tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p server/tsconfig.json",

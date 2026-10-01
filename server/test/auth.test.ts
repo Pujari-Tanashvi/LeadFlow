@@ -9,6 +9,8 @@ const { BrokerageModel } = await import("../src/models/Brokerage.js");
 const { UserModel } = await import("../src/models/User.js");
 const { brokerageFilter, canAccessBrokerage } =
   await import("../src/utils/tenantAccess.js");
+const { buildLeadListFilter, escapeRegex, getLeadTenantId } =
+  await import("../src/utils/leadQuery.js");
 
 describe("authentication primitives", () => {
   it("hashes passwords and verifies only the matching password", async () => {
@@ -91,6 +93,39 @@ describe("database model validation", () => {
     const brokerage = new BrokerageModel({});
 
     assert.ok(brokerage.validateSync()?.errors.name);
+  });
+});
+
+describe("lead tenant query construction", () => {
+  it("always binds list filters to the authenticated brokerage", () => {
+    const brokerageId = getLeadTenantId({
+      brokerageId: "507f1f77bcf86cd799439011",
+    });
+    const filter = buildLeadListFilter({
+      brokerageId,
+      search: "lee",
+      stage: "Qualified",
+    });
+
+    assert.equal(filter.brokerageId.toString(), brokerageId.toString());
+    assert.equal(filter.stage, "Qualified");
+    assert.equal(filter.$or?.[0]?.name?.test("Lee Smith"), true);
+    assert.equal(filter.$or?.[0]?.name?.test("Ashley"), false);
+  });
+
+  it("rejects authenticated users without a valid brokerage ID", () => {
+    assert.throws(() => getLeadTenantId({ brokerageId: null }));
+  });
+
+  it("treats search input as literal text rather than a regular expression", () => {
+    const filter = buildLeadListFilter({
+      brokerageId: getLeadTenantId({ brokerageId: "507f1f77bcf86cd799439011" }),
+      search: "Jamie.+",
+    });
+
+    assert.equal(escapeRegex("Jamie.+"), "Jamie\\.\\+");
+    assert.equal(filter.$or?.[0]?.name?.test("Jamie.+ Chen"), true);
+    assert.equal(filter.$or?.[0]?.name?.test("Jamie Lee Chen"), false);
   });
 });
 

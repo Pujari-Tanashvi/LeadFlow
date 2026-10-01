@@ -106,3 +106,38 @@ Do not modify the approved UI.
 
 Run tests/typecheck and fix errors.
 Commit the changes to https://github.com/Pujari-Tanashvi/LeadFlow
+
+First append this exact prompt to PROMPTS.md.
+
+Implement the LeadFlow lead system.
+
+Create Lead model with:
+name, email, phone, source, propertyType, loanAmount,
+assignedAdvisor, stage, brokerageId, timestamps.
+
+Pipeline stages:
+New
+Contacted
+Qualified
+Documents
+In Review
+Won
+Lost
+
+Create APIs:
+GET /api/leads
+POST /api/leads
+GET /api/leads/:id
+PATCH /api/leads/:id
+DELETE /api/leads/:id
+PATCH /api/leads/:id/stage
+
+Add search, stage filter, advisor filter and pagination.
+
+Enforce brokerage isolation on every lead query.
+
+Record an Activity whenever a lead changes stage.
+
+Do not redesign the frontend.
+Run and fix errors.
+Commit changes.
