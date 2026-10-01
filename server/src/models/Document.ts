@@ -35,6 +35,11 @@ const documentSchema = new Schema(
       default: "Pending",
       required: true,
     },
+    verificationResult: { type: Schema.Types.Mixed, default: null },
+    failureReason: { type: String, default: null, maxlength: 1000 },
+    processingStartedAt: { type: Date, default: null },
+    reviewStartedAt: { type: Date, default: null },
+    verificationCompletedAt: { type: Date, default: null },
     brokerageId: {
       type: Schema.Types.ObjectId,
       ref: "Brokerage",

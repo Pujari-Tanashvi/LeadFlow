@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Lead, Brokerage } from '../types';
-import { soundManager } from '../utils/audio';
-import { 
-  X, 
-  Send, 
-  Sparkles, 
-  AlertTriangle, 
-  Check, 
-  Workflow, 
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { Lead, Brokerage } from "../types";
+import { soundManager } from "../utils/audio";
+import {
+  X,
+  Send,
+  Sparkles,
+  AlertTriangle,
+  Check,
+  Workflow,
   Copy,
   Radio,
-  FileCode2
-} from 'lucide-react';
+  FileCode2,
+} from "lucide-react";
 
 interface LeadIngestionModalProps {
   isOpen: boolean;
@@ -27,43 +27,46 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
   onClose,
   onIngestLead,
   activeBrokerage,
-  existingLeads
+  existingLeads,
 }) => {
-  const [source, setSource] = useState<'Typeform Web Form' | 'Meta Expat Ads' | 'Direct Calendly'>('Typeform Web Form');
-  const [name, setName] = useState('Oliver Bennett');
-  const [email, setEmail] = useState('oliver.b@berlin-tech.io');
-  const [phone, setPhone] = useState('+49 176 8920 3311');
-  const [nationality, setNationality] = useState('British (EU Blue Card)');
-  const [targetCity, setTargetCity] = useState('Berlin-Kreuzberg');
+  const [source, setSource] = useState<
+    "Typeform Web Form" | "Meta Expat Ads" | "Direct Calendly"
+  >("Typeform Web Form");
+  const [name, setName] = useState("Oliver Bennett");
+  const [email, setEmail] = useState("oliver.b@berlin-tech.io");
+  const [phone, setPhone] = useState("+49 176 8920 3311");
+  const [nationality, setNationality] = useState("British (EU Blue Card)");
+  const [targetCity, setTargetCity] = useState("Berlin-Kreuzberg");
   const [loanAmountEur, setLoanAmountEur] = useState(480000);
   const [propertyPriceEur, setPropertyPriceEur] = useState(580000);
-  const [employmentStatus, setEmploymentStatus] = useState<Lead['employmentStatus']>('Blue Card Holder');
+  const [employmentStatus, setEmploymentStatus] =
+    useState<Lead["employmentStatus"]>("Blue Card Holder");
 
   if (!isOpen) return null;
 
   // Preset quick-fills
   const handleLoadDuplicatePreset = () => {
     soundManager.playAlert();
-    setName('Dr. Priya Patel');
-    setEmail('priya.patel@biotech-labs.de');
-    setPhone('+49 176 4921 8840');
-    setNationality('Indian (EU Blue Card)');
-    setTargetCity('Berlin-Prenzlauer Berg');
+    setName("Olivia Martin");
+    setEmail("olivia.martin@example.com");
+    setPhone("+49 176 4921 8840");
+    setNationality("International professional");
+    setTargetCity("Berlin-Prenzlauer Berg");
     setLoanAmountEur(520000);
     setPropertyPriceEur(650000);
-    setEmploymentStatus('Blue Card Holder');
+    setEmploymentStatus("Blue Card Holder");
   };
 
   const handleLoadNewLeadPreset = () => {
     soundManager.playClick();
-    setName('Kavita Sharma');
-    setEmail('kavita.sharma@zalando-engineering.de');
-    setPhone('+49 152 7719 3302');
-    setNationality('Indian (Permanent Residency)');
-    setTargetCity('Berlin-Friedrichshain');
+    setName("Kavita Sharma");
+    setEmail("kavita.sharma@zalando-engineering.de");
+    setPhone("+49 152 7719 3302");
+    setNationality("Indian (Permanent Residency)");
+    setTargetCity("Berlin-Friedrichshain");
     setLoanAmountEur(590000);
     setPropertyPriceEur(700000);
-    setEmploymentStatus('Employed (Permanent)');
+    setEmploymentStatus("Employed (Permanent)");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -71,10 +74,11 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
     soundManager.playSuccess();
 
     // Check duplicate logic (Requirement 4: Notice when a new lead is a person the brokerage already knows)
-    const matchingLead = existingLeads.find(l => 
-      l.email.toLowerCase() === email.toLowerCase() ||
-      l.phone === phone ||
-      l.name.toLowerCase() === name.toLowerCase()
+    const matchingLead = existingLeads.find(
+      (l) =>
+        l.email.toLowerCase() === email.toLowerCase() ||
+        l.phone === phone ||
+        l.name.toLowerCase() === name.toLowerCase(),
     );
 
     const newLead: Lead = {
@@ -89,17 +93,19 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
       propertyPriceEur,
       employmentStatus,
       source,
-      stage: 'new',
-      assignedAdvisorId: 'adv-1',
-      createdAt: 'Just now',
-      updatedAt: 'Just now',
+      stage: "new",
+      assignedAdvisorId: "adv-1",
+      createdAt: "Just now",
+      updatedAt: "Just now",
       isClient: false,
       notesCount: 0,
-      duplicateInfo: matchingLead ? {
-        isDuplicate: true,
-        previousLeadId: matchingLead.id,
-        reason: `Matched existing lead "${matchingLead.name}" by ${matchingLead.email.toLowerCase() === email.toLowerCase() ? 'email' : 'phone'}`
-      } : undefined
+      duplicateInfo: matchingLead
+        ? {
+            isDuplicate: true,
+            previousLeadId: matchingLead.id,
+            reason: `Matched existing lead "${matchingLead.name}" by ${matchingLead.email.toLowerCase() === email.toLowerCase() ? "email" : "phone"}`,
+          }
+        : undefined,
     };
 
     onIngestLead(newLead);
@@ -125,7 +131,8 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
                 Inbound Webhook Lead Simulator
               </h3>
               <p className="text-xs text-slate-500">
-                Simulate inbound lead arrival from external tools (Typeform, Meta Ads, Calendly).
+                Simulate inbound lead arrival from external tools (Typeform,
+                Meta Ads, Calendly).
               </p>
             </div>
           </div>
@@ -143,7 +150,9 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
 
         {/* Quick Presets */}
         <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-2 text-xs">
-          <span className="font-semibold text-slate-600">Quick Test Scenarios:</span>
+          <span className="font-semibold text-slate-600">
+            Quick Test Scenarios:
+          </span>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -165,23 +174,32 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
-          
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="font-semibold text-slate-700">Source Tool</label>
+              <label className="font-semibold text-slate-700">
+                Source Tool
+              </label>
               <select
                 value={source}
                 onChange={(e) => setSource(e.target.value as typeof source)}
                 className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none cursor-pointer"
               >
-                <option value="Typeform Web Form">Typeform Web Form Webhook</option>
-                <option value="Meta Expat Ads">Meta Expat Ads (Facebook/IG)</option>
-                <option value="Direct Calendly">Calendly Booking Webhook</option>
+                <option value="Typeform Web Form">
+                  Typeform Web Form Webhook
+                </option>
+                <option value="Meta Expat Ads">
+                  Meta Expat Ads (Facebook/IG)
+                </option>
+                <option value="Direct Calendly">
+                  Calendly Booking Webhook
+                </option>
               </select>
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-slate-700">Destination Brokerage</label>
+              <label className="font-semibold text-slate-700">
+                Destination Brokerage
+              </label>
               <input
                 type="text"
                 disabled
@@ -193,7 +211,9 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="font-semibold text-slate-700">Applicant Full Name</label>
+              <label className="font-semibold text-slate-700">
+                Applicant Full Name
+              </label>
               <input
                 type="text"
                 required
@@ -204,7 +224,9 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-slate-700">Email Address</label>
+              <label className="font-semibold text-slate-700">
+                Email Address
+              </label>
               <input
                 type="email"
                 required
@@ -228,7 +250,9 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-slate-700">Nationality & Visa</label>
+              <label className="font-semibold text-slate-700">
+                Nationality & Visa
+              </label>
               <input
                 type="text"
                 required
@@ -239,7 +263,9 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-slate-700">Target German City</label>
+              <label className="font-semibold text-slate-700">
+                Property City
+              </label>
               <input
                 type="text"
                 required
@@ -252,7 +278,9 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="font-semibold text-slate-700">Requested Loan (€)</label>
+              <label className="font-semibold text-slate-700">
+                Requested Loan (€)
+              </label>
               <input
                 type="number"
                 min="50000"
@@ -264,7 +292,9 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-slate-700">Property Price (€)</label>
+              <label className="font-semibold text-slate-700">
+                Property Price (€)
+              </label>
               <input
                 type="number"
                 min="50000"
@@ -292,7 +322,6 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
               <span>Simulate Inbound Lead</span>
             </button>
           </div>
-
         </form>
       </motion.div>
     </div>

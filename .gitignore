@@ -11,3 +11,4 @@ dist
 .conversion-test-data
 server/data/private-documents
 .document-test-data
+.verification-test-data

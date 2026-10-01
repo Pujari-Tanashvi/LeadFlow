@@ -171,6 +171,52 @@ Commit changes.
 
 First append this exact prompt to PROMPTS.md.
 
+Implement background document verification.
+
+When a document is uploaded:
+Pending → Processing → In Review → Verified/Failed
+
+Use a background job/worker instead of blocking the API request.
+
+Verification should intentionally take a few seconds and sometimes fail.
+
+Store:
+verification result
+failure reason
+timestamps
+
+Emit Socket.IO document status events so client/advisor screens can update live.
+
+Add retry handling for failed jobs. homepage includes under l interactive liquide glass there are stuff like glass efeect and below that at60-30 color systems and typographic scale and stuff is not related to the project put things that are a match to project not for effects of site,also names all over the site are german keep them simple give legit names to each and everything.
+
+Do not redesign the frontend.
+Test and commit.
+
+First append this exact prompt to PROMPTS.md.
+
+Implement background document verification.
+
+When a document is uploaded:
+Pending → Processing → In Review → Verified/Failed
+
+Use a background job/worker instead of blocking the API request.
+
+Verification should intentionally take a few seconds and sometimes fail.
+
+Store:
+verification result
+failure reason
+timestamps
+
+Emit Socket.IO document status events so client/advisor screens can update live.
+
+Add retry handling for failed jobs. homepage includes under l interactive liquide glass there are stuff like glass efeect and below that at60-30 color systems and typographic scale and stuff is not related to the project put things that are a match to project not for effects of site,also names all over the site are german keep them simple give legit names to each and everything.
+
+Do not redesign the frontend.
+Test and commit.
+
+First append this exact prompt to PROMPTS.md.
+
 Implement LeadFlow document management.
 
 Create Document model:

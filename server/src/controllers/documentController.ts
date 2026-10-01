@@ -12,6 +12,11 @@ import {
   resolveDocumentScope,
 } from "../services/documentAccessService.js";
 import { documentStorage } from "../services/documentStorage.js";
+import {
+  enqueueDocumentVerification,
+  retryFailedDocumentVerification,
+} from "../services/documentVerificationWorker.js";
+import { emitDocumentStatus } from "../sockets/index.js";
 import { canTransitionDocumentStatus } from "../utils/documentStatus.js";
 
 function publicDocument(document: InstanceType<typeof DocumentModel>) {
@@ -99,15 +104,14 @@ export const uploadDocument: RequestHandler = async (
     return;
   }
   if (!fileSignatureMatches(request.file)) {
-    response
-      .status(415)
-      .json({
-        error: "File content does not match an accepted PDF or image type.",
-      });
+    response.status(415).json({
+      error: "File content does not match an accepted PDF or image type.",
+    });
     return;
   }
 
   let stored: Awaited<ReturnType<typeof documentStorage.save>> | undefined;
+  let savedDocument: InstanceType<typeof DocumentModel> | undefined;
   try {
     const scope = await resolveDocumentScope(request.auth, clientId);
     const client = await ClientModel.findOne({
@@ -133,8 +137,24 @@ export const uploadDocument: RequestHandler = async (
       status: "Pending",
       brokerageId: scope.brokerageId,
     });
+    savedDocument = document;
+    await enqueueDocumentVerification({
+      documentId: document._id,
+      clientId: client._id,
+      brokerageId: scope.brokerageId,
+    });
+    emitDocumentStatus(
+      scope.brokerageId.toString(),
+      client._id.toString(),
+      publicDocument(document),
+    );
     response.status(201).json({ document: publicDocument(document) });
   } catch (error) {
+    if (savedDocument) {
+      await DocumentModel.deleteOne({ _id: savedDocument._id }).catch(
+        () => undefined,
+      );
+    }
     if (stored)
       await documentStorage.remove(stored.storageKey).catch(() => undefined);
     handleControllerError(error, next);
@@ -258,11 +278,9 @@ export const updateDocumentStatus: RequestHandler = async (
     typeof request.body?.status !== "string" ||
     !DOCUMENT_STATUSES.includes(request.body.status as DocumentStatus)
   ) {
-    response
-      .status(400)
-      .json({
-        error: `status must be one of: ${DOCUMENT_STATUSES.join(", ")}.`,
-      });
+    response.status(400).json({
+      error: `status must be one of: ${DOCUMENT_STATUSES.join(", ")}.`,
+    });
     return;
   }
   try {
@@ -270,11 +288,9 @@ export const updateDocumentStatus: RequestHandler = async (
     if (!result) return;
     const nextStatus = request.body.status as DocumentStatus;
     if (!canTransitionDocumentStatus(result.document.status, nextStatus)) {
-      response
-        .status(409)
-        .json({
-          error: `Cannot change status from ${result.document.status} to ${nextStatus}.`,
-        });
+      response.status(409).json({
+        error: `Cannot change status from ${result.document.status} to ${nextStatus}.`,
+      });
       return;
     }
     const document = await DocumentModel.findOneAndUpdate(
@@ -287,11 +303,9 @@ export const updateDocumentStatus: RequestHandler = async (
       { new: true, runValidators: true },
     ).exec();
     if (!document) {
-      response
-        .status(409)
-        .json({
-          error: "Document status changed concurrently. Reload and retry.",
-        });
+      response.status(409).json({
+        error: "Document status changed concurrently. Reload and retry.",
+      });
       return;
     }
     response.status(200).json({ document: publicDocument(document) });
@@ -324,6 +338,37 @@ export const deleteDocument: RequestHandler = async (
       ...documentScopeFilter(result.scope),
     }).exec();
     response.status(204).end();
+  } catch (error) {
+    handleControllerError(error, next);
+  }
+};
+
+export const retryDocumentVerification: RequestHandler = async (
+  request,
+  response,
+  next,
+) => {
+  try {
+    const result = await findAccessibleDocument(request, response);
+    if (!result) return;
+    if (result.document.status !== "Failed") {
+      response
+        .status(409)
+        .json({ error: "Only failed documents can be retried." });
+      return;
+    }
+
+    const document = await retryFailedDocumentVerification(
+      result.document._id,
+      result.scope.brokerageId,
+    );
+    if (!document) {
+      response.status(409).json({
+        error: "Document was already retried. Refresh and try again.",
+      });
+      return;
+    }
+    response.status(202).json({ document: publicDocument(document) });
   } catch (error) {
     handleControllerError(error, next);
   }

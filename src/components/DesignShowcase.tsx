@@ -1,24 +1,24 @@
-import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { DESIGN_SHOWCASE_ITEMS } from '../data/mockData';
-import { DesignShowcaseItem } from '../types';
-import { soundManager } from '../utils/audio';
-import { 
-  Sparkles, 
-  Layers, 
-  Maximize2, 
-  Check, 
-  ArrowRight, 
-  Sliders, 
-  Eye, 
-  Zap, 
-  ShieldCheck, 
-  Workflow, 
+import React, { useState, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { DESIGN_SHOWCASE_ITEMS } from "../data/mockData";
+import { DesignShowcaseItem } from "../types";
+import { soundManager } from "../utils/audio";
+import {
+  Sparkles,
+  Layers,
+  Maximize2,
+  Check,
+  ArrowRight,
+  Sliders,
+  Eye,
+  Zap,
+  ShieldCheck,
+  Workflow,
   X,
   Compass,
   Cpu,
-  LayoutDashboard
-} from 'lucide-react';
+  LayoutDashboard,
+} from "lucide-react";
 
 interface DesignShowcaseProps {
   onExploreLivePipeline: () => void;
@@ -29,10 +29,14 @@ interface DesignShowcaseProps {
 export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
   onExploreLivePipeline,
   onExploreDocuments,
-  onViewDashboard
+  onViewDashboard,
 }) => {
-  const [selectedItem, setSelectedItem] = useState<DesignShowcaseItem>(DESIGN_SHOWCASE_ITEMS[0]);
-  const [lightboxImage, setLightboxImage] = useState<DesignShowcaseItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<DesignShowcaseItem>(
+    DESIGN_SHOWCASE_ITEMS[0],
+  );
+  const [lightboxImage, setLightboxImage] = useState<DesignShowcaseItem | null>(
+    null,
+  );
   const [activeGraphicEffect, setActiveGraphicEffect] = useState<number>(1);
   const [glassBlur, setGlassBlur] = useState<number>(24);
   const [glassOpacity, setGlassOpacity] = useState<number>(75);
@@ -58,7 +62,7 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
     setRotateY(rY);
     setGlarePos({
       x: (x / rect.width) * 100,
-      y: (y / rect.height) * 100
+      y: (y / rect.height) * 100,
     });
   };
 
@@ -70,94 +74,97 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
   const GRAPHIC_EFFECTS = [
     {
       id: 1,
-      title: '01. Glass Effect',
-      desc: 'High-index acrylic refraction with dual-sided specular bevels and backdrop blur',
+      title: "01. New lead",
+      desc: "Confirm contact details, source and requested loan amount.",
       style: {
         background: `rgba(255, 255, 255, ${glassOpacity / 100})`,
         backdropFilter: `blur(${glassBlur}px) saturate(180%)`,
         WebkitBackdropFilter: `blur(${glassBlur}px) saturate(180%)`,
-        border: '1px solid rgba(255, 255, 255, 0.85)',
-        boxShadow: '0 20px 40px -15px rgba(0,0,0,0.06), inset 0 1px 2px 0 rgba(255,255,255,0.95)'
-      }
+        border: "1px solid rgba(255, 255, 255, 0.85)",
+        boxShadow:
+          "0 20px 40px -15px rgba(0,0,0,0.06), inset 0 1px 2px 0 rgba(255,255,255,0.95)",
+      },
     },
     {
       id: 2,
-      title: '02. Neumorphism',
-      desc: 'Soft extruded organic clay with paired directional incident light and ambient depression',
+      title: "02. Contacted",
+      desc: "Advisor has reached the applicant and captured the next step.",
       style: {
-        background: '#f1f5f9',
-        boxShadow: '8px 8px 20px #d1d5db, -8px -8px 20px #ffffff',
-        border: 'none'
-      }
+        background: "#f1f5f9",
+        boxShadow: "8px 8px 20px #d1d5db, -8px -8px 20px #ffffff",
+        border: "none",
+      },
     },
     {
       id: 3,
-      title: '03. Drop Shadow',
-      desc: 'Multi-layer progressive ambient occlusion with ultra-soft dispersion radius',
+      title: "03. Qualified",
+      desc: "Income, deposit and property details are ready for review.",
       style: {
-        background: '#ffffff',
-        boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.15)',
-        border: '1px solid rgba(226, 232, 240, 0.8)'
-      }
+        background: "#ffffff",
+        boxShadow: "0 25px 50px -12px rgba(15, 23, 42, 0.15)",
+        border: "1px solid rgba(226, 232, 240, 0.8)",
+      },
     },
     {
       id: 4,
-      title: '04. Glow Effect',
-      desc: 'Diffused pastel emission halo (420nm amber & rose) radiating behind surface geometry',
+      title: "04. Documents",
+      desc: "Collect identity, income and property documents from the client.",
       style: {
-        background: '#ffffff',
-        border: '1px solid rgba(251, 146, 60, 0.4)',
-        boxShadow: '0 0 35px 5px rgba(251, 146, 60, 0.35), 0 0 15px rgba(244, 63, 94, 0.2)'
-      }
+        background: "#ffffff",
+        border: "1px solid rgba(251, 146, 60, 0.4)",
+        boxShadow:
+          "0 0 35px 5px rgba(251, 146, 60, 0.35), 0 0 15px rgba(244, 63, 94, 0.2)",
+      },
     },
     {
       id: 5,
-      title: '05. Gradient Overlay',
-      desc: 'Curated 3-stop liquid pastel transition (sunset apricot to ethereal periwinkle)',
+      title: "05. In Review",
+      desc: "Check completeness and prepare the lender submission pack.",
       style: {
-        background: 'linear-gradient(135deg, #fbcfe8 0%, #fed7aa 50%, #c7d2fe 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.6)',
-        boxShadow: '0 12px 30px -8px rgba(244, 114, 182, 0.25)'
-      }
+        background:
+          "linear-gradient(135deg, #fbcfe8 0%, #fed7aa 50%, #c7d2fe 100%)",
+        border: "1px solid rgba(255, 255, 255, 0.6)",
+        boxShadow: "0 12px 30px -8px rgba(244, 114, 182, 0.25)",
+      },
     },
     {
       id: 6,
-      title: '06. Outer Glow',
-      desc: 'Refined neon luminance boundary delineating active system state without harsh strokes',
+      title: "06. Verified",
+      desc: "Required files passed review and are ready for underwriting.",
       style: {
-        background: '#ffffff',
-        border: '1.5px solid #38bdf8',
-        boxShadow: '0 0 25px 2px rgba(56, 189, 248, 0.45)'
-      }
+        background: "#ffffff",
+        border: "1.5px solid #38bdf8",
+        boxShadow: "0 0 25px 2px rgba(56, 189, 248, 0.45)",
+      },
     },
     {
       id: 7,
-      title: '07. Inner Shadow',
-      desc: 'Subtle debossed concave depth simulating stamped tactile precision instrument panels',
+      title: "07. Follow-up",
+      desc: "Request a replacement when a document is missing or out of date.",
       style: {
-        background: '#f8fafc',
-        boxShadow: 'inset 4px 4px 8px rgba(0, 0, 0, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.9)',
-        border: '1px solid rgba(226, 232, 240, 0.6)'
-      }
+        background: "#f8fafc",
+        boxShadow:
+          "inset 4px 4px 8px rgba(0, 0, 0, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.9)",
+        border: "1px solid rgba(226, 232, 240, 0.6)",
+      },
     },
     {
       id: 8,
-      title: '08. Bevel & Emboss',
-      desc: 'Precision micro-milled chamfer with highlight crest and shadow base',
+      title: "08. Complete",
+      desc: "Record the outcome and keep the full case history together.",
       style: {
-        background: '#ffffff',
-        borderTop: '2px solid rgba(255, 255, 255, 1)',
-        borderLeft: '2px solid rgba(255, 255, 255, 0.8)',
-        borderBottom: '2px solid rgba(148, 163, 184, 0.5)',
-        borderRight: '2px solid rgba(148, 163, 184, 0.3)',
-        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)'
-      }
-    }
+        background: "#ffffff",
+        borderTop: "2px solid rgba(255, 255, 255, 1)",
+        borderLeft: "2px solid rgba(255, 255, 255, 0.8)",
+        borderBottom: "2px solid rgba(148, 163, 184, 0.5)",
+        borderRight: "2px solid rgba(148, 163, 184, 0.3)",
+        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)",
+      },
+    },
   ];
 
   return (
     <div className="relative py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16">
-      
       {/* Ambient decorative gradient lights */}
       <div className="pointer-events-none absolute -top-12 left-1/4 w-96 h-96 bg-rose-200/40 rounded-full blur-3xl -z-10 animate-pulse" />
       <div className="pointer-events-none absolute top-1/3 right-10 w-96 h-96 bg-amber-200/35 rounded-full blur-3xl -z-10" />
@@ -167,7 +174,9 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
       <section className="text-center max-w-4xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/80 border border-slate-200/80 shadow-xs text-xs font-semibold text-slate-700">
           <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          <span>Mortgage brokerage workspace · Leads, documents & workflows</span>
+          <span>
+            Mortgage brokerage workspace · Leads, documents & workflows
+          </span>
         </div>
 
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight text-balance">
@@ -175,7 +184,8 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
         </h1>
 
         <p className="text-base sm:text-lg text-slate-600 leading-relaxed text-balance">
-          A modern mortgage brokerage platform for managing leads, clients, documents, tasks and automated workflows.
+          A modern mortgage brokerage platform for managing leads, clients,
+          documents, tasks and automated workflows.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -218,12 +228,14 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
       <section className="space-y-6">
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 border-b border-slate-200/80 pb-4">
           <div>
-            <span className="text-xs font-semibold tracking-wider text-slate-600">WORKSPACE PREVIEW</span>
+            <span className="text-xs font-semibold tracking-wider text-slate-600">
+              WORKSPACE PREVIEW
+            </span>
             <h2 className="text-2xl font-bold text-slate-900">
               {selectedItem.title}
             </h2>
             <p className="text-sm text-slate-600 mt-0.5">
-              {selectedItem.subtitle} · Interactive 3D Parallax & Liquid Glass Specular
+              {selectedItem.subtitle} · Lead, case and document activity
             </p>
           </div>
 
@@ -242,7 +254,7 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
         </div>
 
         {/* 3D Tilt Stage */}
-        <div 
+        <div
           className="relative perspective-1000 w-full"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
@@ -250,15 +262,20 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
           <motion.div
             ref={cardRef}
             animate={{ rotateX, rotateY }}
-            transition={{ type: 'spring', damping: 20, stiffness: 180, mass: 0.5 }}
-            style={{ transformStyle: 'preserve-3d' }}
+            transition={{
+              type: "spring",
+              damping: 20,
+              stiffness: 180,
+              mass: 0.5,
+            }}
+            style={{ transformStyle: "preserve-3d" }}
             className="relative w-full rounded-3xl overflow-hidden glass-panel-interactive border border-white/80 shadow-2xl group cursor-crosshair"
           >
             {/* Dynamic Specular Sheen layer */}
-            <div 
+            <div
               className="pointer-events-none absolute inset-0 z-20 opacity-0 group-hover:opacity-40 transition-opacity duration-300"
               style={{
-                background: `radial-gradient(circle 350px at ${glarePos.x}% ${glarePos.y}%, rgba(255,255,255,0.9), transparent 80%)`
+                background: `radial-gradient(circle 350px at ${glarePos.x}% ${glarePos.y}%, rgba(255,255,255,0.9), transparent 80%)`,
               }}
             />
 
@@ -276,8 +293,12 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-                    <span className="text-xs font-bold text-slate-900">{selectedItem.title}</span>
-                    <span className="text-xs text-slate-500">· {selectedItem.aspectRatio} Aspect</span>
+                    <span className="text-xs font-bold text-slate-900">
+                      {selectedItem.title}
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      · {selectedItem.aspectRatio} Aspect
+                    </span>
                   </div>
                   <p className="text-xs sm:text-sm text-slate-600 max-w-2xl">
                     {selectedItem.description}
@@ -286,7 +307,10 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
 
                 <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                   {selectedItem.visualEffects.map((eff, i) => (
-                    <span key={i} className="px-2.5 py-1 text-[11px] font-medium rounded-md bg-slate-100/90 text-slate-700 border border-slate-200/60">
+                    <span
+                      key={i}
+                      className="px-2.5 py-1 text-[11px] font-medium rounded-md bg-slate-100/90 text-slate-700 border border-slate-200/60"
+                    >
                       {eff}
                     </span>
                   ))}
@@ -308,9 +332,9 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
                   setSelectedItem(item);
                 }}
                 className={`text-left p-3 rounded-2xl transition-all cursor-pointer group ${
-                  isSelected 
-                    ? 'glass-panel ring-2 ring-slate-900 shadow-md' 
-                    : 'bg-white/60 hover:bg-white/90 border border-slate-200/80 shadow-xs'
+                  isSelected
+                    ? "glass-panel ring-2 ring-slate-900 shadow-md"
+                    : "bg-white/60 hover:bg-white/90 border border-slate-200/80 shadow-xs"
                 }`}
               >
                 <div className="aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3 relative">
@@ -338,54 +362,44 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
         </div>
       </section>
 
-      {/* The 8 Graphic Effects Laboratory (Directly realizing the user's reference image!) */}
+      {/* Lead stages and review checkpoints */}
       <section className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/80 shadow-lg space-y-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 mb-1">
               <Layers className="w-4 h-4 text-indigo-500" />
-              <span>REFERENCE EFFECT SUITE (1.0 GRAPHIC EFFECTS)</span>
+              <span>LEAD & DOCUMENT WORKFLOW</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
-              Interactive Liquid Glass & Neomorphic Kit
+              From new enquiry to verified documents
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
-              Inspect the exact graphic treatments from the Pinterest reference sheet:
-              Frosted glass, neumorphism, glow halos, gradient overlays, and bevel chamfers.
+              Track each mortgage case through advisor follow-up, document
+              collection and lender review.
             </p>
           </div>
 
           {/* Interactive Live Tuners */}
           <div className="flex flex-wrap items-center gap-4 bg-slate-100/80 p-3 rounded-xl border border-slate-200 text-xs">
             <div className="flex items-center gap-2">
-              <span className="text-slate-600 font-medium">Blur:</span>
-              <input
-                type="range"
-                min="8"
-                max="40"
-                value={glassBlur}
-                onChange={(e) => setGlassBlur(Number(e.target.value))}
-                className="w-20 accent-slate-800"
-              />
-              <span className="font-mono text-[11px] text-slate-700 w-8">{glassBlur}px</span>
+              <span className="text-slate-600 font-medium">
+                Documents in queue
+              </span>
+              <span className="font-mono text-[11px] text-slate-700">
+                18 files
+              </span>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-slate-600 font-medium">Opacity:</span>
-              <input
-                type="range"
-                min="30"
-                max="95"
-                value={glassOpacity}
-                onChange={(e) => setGlassOpacity(Number(e.target.value))}
-                className="w-20 accent-slate-800"
-              />
-              <span className="font-mono text-[11px] text-slate-700 w-8">{glassOpacity}%</span>
+              <span className="text-slate-600 font-medium">Review target</span>
+              <span className="font-mono text-[11px] text-slate-700">
+                2 business days
+              </span>
             </div>
           </div>
         </div>
 
-        {/* 8 Graphic Effects Grid */}
+        {/* Lead workflow stage grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {GRAPHIC_EFFECTS.map((eff) => {
             const isActive = activeGraphicEffect === eff.id;
@@ -397,16 +411,18 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
                   setActiveGraphicEffect(eff.id);
                 }}
                 className={`p-4 rounded-2xl transition-all cursor-pointer flex flex-col justify-between h-56 ${
-                  isActive ? 'ring-2 ring-slate-900 shadow-md' : 'bg-slate-50/50 hover:bg-slate-50'
+                  isActive
+                    ? "ring-2 ring-slate-900 shadow-md"
+                    : "bg-slate-50/50 hover:bg-slate-50"
                 }`}
               >
                 {/* Visual Swatch Demo */}
-                <div 
+                <div
                   className="w-full h-24 rounded-xl flex items-center justify-center transition-all"
                   style={eff.style}
                 >
                   <span className="text-xs font-bold text-slate-800 drop-shadow-xs">
-                    {eff.title.split('. ')[1]}
+                    {eff.title.split(". ")[1]}
                   </span>
                 </div>
 
@@ -414,7 +430,9 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
                 <div className="pt-3">
                   <h4 className="text-xs font-bold text-slate-900 flex items-center justify-between">
                     <span>{eff.title}</span>
-                    {isActive && <Check className="w-3.5 h-3.5 text-slate-900" />}
+                    {isActive && (
+                      <Check className="w-3.5 h-3.5 text-slate-900" />
+                    )}
                   </h4>
                   <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                     {eff.desc}
@@ -426,92 +444,104 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
         </div>
       </section>
 
-      {/* Design System Foundations: Typography & Color Harmony */}
+      {/* Mortgage operations overview */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Card 1: 60-30-10 Color Architecture */}
+        {/* Card 1: Pipeline snapshot */}
         <div className="glass-panel p-6 rounded-2xl border border-white/80 space-y-4">
           <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
             <Compass className="w-4 h-4 text-amber-500" />
-            <span>60-30-10 Color System</span>
+            <span>Pipeline Snapshot</span>
           </div>
           <p className="text-xs text-slate-600">
-            Disciplined allocation preventing rainbow clutter while maintaining warm tactile presence.
+            Current cases across the active mortgage stages.
           </p>
 
           <div className="space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-slate-600 font-medium">60% Canvas & Neutral</span>
-              <span className="font-mono text-slate-500">#F8F9FA / Travertine</span>
+              <span className="text-slate-600 font-medium">
+                New and contacted
+              </span>
+              <span className="font-mono text-slate-500">11 cases</span>
             </div>
             <div className="h-3 rounded-md bg-[#F8F9FA] border border-slate-300 w-full" />
 
             <div className="flex items-center justify-between pt-1">
-              <span className="text-slate-600 font-medium">30% Frosted Surfaces</span>
-              <span className="font-mono text-slate-500">rgba(255,255,255,0.75)</span>
+              <span className="text-slate-600 font-medium">
+                Documents and review
+              </span>
+              <span className="font-mono text-slate-500">12 cases</span>
             </div>
             <div className="h-3 rounded-md bg-white/75 border border-white shadow-xs w-full" />
 
             <div className="flex items-center justify-between pt-1">
-              <span className="text-slate-600 font-medium">10% Accent Points</span>
-              <span className="font-mono text-slate-500">#0F172A Slate & #059669 Emerald</span>
+              <span className="text-slate-600 font-medium">Won this month</span>
+              <span className="font-mono text-slate-500">2 cases</span>
             </div>
             <div className="h-3 rounded-md bg-gradient-to-r from-slate-900 via-emerald-600 to-amber-500 w-full" />
           </div>
         </div>
 
-        {/* Card 2: Typographic Hierarchy */}
+        {/* Card 2: Document review */}
         <div className="glass-panel p-6 rounded-2xl border border-white/80 space-y-4">
           <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
             <Layers className="w-4 h-4 text-blue-500" />
-            <span>Typographic Scale & Numerals</span>
+            <span>Document Review</span>
           </div>
           <p className="text-xs text-slate-600">
-            Plus Jakarta Sans paired with tabular figures for financial loan data.
+            Keep required borrower files and review outcomes together.
           </p>
 
           <div className="space-y-2.5 text-xs">
             <div>
-              <span className="text-[11px] text-slate-600">Display Face (Headline)</span>
-              <p className="text-base font-extrabold text-slate-900 tracking-tight">Plus Jakarta Sans 800</p>
+              <span className="text-[11px] text-slate-600">
+                Awaiting upload
+              </span>
+              <p className="text-base font-extrabold text-slate-900 tracking-tight">
+                6 documents
+              </p>
             </div>
             <div>
-              <span className="text-[11px] text-slate-600">Body Prose</span>
-              <p className="text-xs font-normal text-slate-700 leading-normal">Clean 14px regular with optimal 1.6 line height</p>
+              <span className="text-[11px] text-slate-600">Processing</span>
+              <p className="text-xs font-normal text-slate-700 leading-normal">
+                4 files in background checks
+              </p>
             </div>
             <div>
-              <span className="text-[11px] text-slate-600">Financial Metrics (Tabular)</span>
-              <p className="font-mono text-xs font-bold text-slate-900 tabular-nums">€14,250,000 · 3.42% p.a.</p>
+              <span className="text-[11px] text-slate-600">
+                Ready for lender review
+              </span>
+              <p className="font-mono text-xs font-bold text-slate-900 tabular-nums">
+                8 files verified
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Card 3: Anti-Slop Discipline & Zero-Pill */}
+        {/* Card 3: Advisor follow-up */}
         <div className="glass-panel p-6 rounded-2xl border border-white/80 space-y-4">
           <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
             <Cpu className="w-4 h-4 text-purple-500" />
-            <span>Anti-AI-Slop Restraint</span>
+            <span>Advisor Follow-up</span>
           </div>
           <p className="text-xs text-slate-600">
-            Zero decorative pill sandwiches, no code comment headers, and authentic German mortgage logic.
+            Keep the next client action visible for every active case.
           </p>
 
           <ul className="space-y-2 text-xs text-slate-600">
             <li className="flex items-start gap-2">
               <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-              <span>Unboxed metadata with typographic dots (·)</span>
+              <span>New enquiries assigned to an advisor</span>
             </li>
             <li className="flex items-start gap-2">
               <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-              <span>Single-level card elevation to prevent visual fatigue</span>
+              <span>Document requests tracked on the client case</span>
             </li>
             <li className="flex items-start gap-2">
               <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-              <span>Sub-200ms motion budget with spring damping</span>
+              <span>Overdue follow-ups highlighted for review</span>
             </li>
           </ul>
         </div>
-
       </section>
 
       {/* Lightbox Modal for High-Resolution Inspection */}
@@ -549,10 +579,15 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
 
               <div className="p-6 text-white space-y-2">
                 <h3 className="text-xl font-bold">{lightboxImage.title}</h3>
-                <p className="text-sm text-slate-300">{lightboxImage.description}</p>
+                <p className="text-sm text-slate-300">
+                  {lightboxImage.description}
+                </p>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {lightboxImage.designNotes.map((note, i) => (
-                    <span key={i} className="text-xs px-2.5 py-1 rounded-md bg-white/10 text-slate-200">
+                    <span
+                      key={i}
+                      className="text-xs px-2.5 py-1 rounded-md bg-white/10 text-slate-200"
+                    >
                       {note}
                     </span>
                   ))}
@@ -562,7 +597,6 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
   );
 };

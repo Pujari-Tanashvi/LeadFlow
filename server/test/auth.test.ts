@@ -10,6 +10,8 @@ const { BrokerageModel } = await import("../src/models/Brokerage.js");
 const { ClientModel } = await import("../src/models/Client.js");
 const { DocumentModel, DOCUMENT_STATUSES } =
   await import("../src/models/Document.js");
+const { DocumentVerificationJobModel, VERIFICATION_JOB_STATUSES } =
+  await import("../src/models/DocumentVerificationJob.js");
 const { LeadModel } = await import("../src/models/Lead.js");
 const { UserModel } = await import("../src/models/User.js");
 const { brokerageFilter, canAccessBrokerage } =
@@ -24,6 +26,8 @@ const { documentScopeFilter } =
   await import("../src/services/documentAccessService.js");
 const { canTransitionDocumentStatus } =
   await import("../src/utils/documentStatus.js");
+const { createVerificationOutcome } =
+  await import("../src/services/documentVerificationWorker.js");
 const { parseExternalLeadInput } =
   await import("../src/utils/webhookLeadInput.js");
 const { webhookSecretMatches } =
@@ -202,6 +206,43 @@ describe("database model validation", () => {
     ]);
     assert.ok(indexes.includes("brokerageId,clientId,createdAt"));
     assert.equal(document.validateSync(), undefined);
+  });
+
+  it("stores persistent verification jobs with retry and claim indexes", () => {
+    const job = new DocumentVerificationJobModel({
+      documentId: new Types.ObjectId(),
+      clientId: new Types.ObjectId(),
+      brokerageId: new Types.ObjectId(),
+    });
+    const indexes = DocumentVerificationJobModel.schema
+      .indexes()
+      .map(([keys]) => Object.keys(keys).join(","));
+
+    assert.deepEqual(VERIFICATION_JOB_STATUSES, [
+      "Queued",
+      "Processing",
+      "Completed",
+      "Failed",
+    ]);
+    assert.equal(job.validateSync(), undefined);
+    assert.equal(job.attempts, 0);
+    assert.equal(job.maxAttempts, 3);
+    assert.ok(indexes.includes("status,nextAttemptAt,createdAt"));
+  });
+
+  it("records successful and failed verification results and reasons", () => {
+    const completedAt = new Date("2026-10-01T12:00:00.000Z");
+    const passed = createVerificationOutcome(false, "income.pdf", completedAt);
+    const failed = createVerificationOutcome(true, "income.pdf", completedAt);
+
+    assert.equal(passed.status, "Verified");
+    assert.equal(passed.verificationResult.passed, true);
+    assert.equal(passed.verificationResult.completedAt, completedAt);
+    assert.equal(passed.failureReason, null);
+    assert.equal(failed.status, "Failed");
+    assert.equal(failed.verificationResult.passed, false);
+    assert.equal(failed.verificationResult.completedAt, completedAt);
+    assert.match(failed.failureReason ?? "", /Manual review/);
   });
 
   it("allows valid document-status progressions only", () => {

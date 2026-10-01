@@ -1,20 +1,26 @@
-import React, { useState } from 'react';
-import { EmailTemplate, TaskTrigger, LeadTask, Brokerage, PipelineStage } from '../types';
-import { soundManager } from '../utils/audio';
-import { 
-  Mail, 
-  Clock, 
-  CheckCircle2, 
-  Plus, 
-  Edit3, 
-  Trash2, 
-  Sparkles, 
+import React, { useState } from "react";
+import {
+  EmailTemplate,
+  TaskTrigger,
+  LeadTask,
+  Brokerage,
+  PipelineStage,
+} from "../types";
+import { soundManager } from "../utils/audio";
+import {
+  Mail,
+  Clock,
+  CheckCircle2,
+  Plus,
+  Edit3,
+  Trash2,
+  Sparkles,
   AlertCircle,
   Check,
   Send,
   Sliders,
-  ChevronRight
-} from 'lucide-react';
+  ChevronRight,
+} from "lucide-react";
 
 interface AdminAutomationsProps {
   emailTemplates: EmailTemplate[];
@@ -28,13 +34,13 @@ interface AdminAutomationsProps {
 }
 
 const STAGE_LABELS: Record<PipelineStage, string> = {
-  new: 'New Inbound',
-  contacted: 'Contacted',
-  doc_gathering: 'Doc Gathering',
-  bank_underwriting: 'Bank Underwriting',
-  offer_received: 'Offer Received',
-  won: 'Won / Signed',
-  lost: 'Lost / Disqualified'
+  new: "New Inbound",
+  contacted: "Contacted",
+  doc_gathering: "Doc Gathering",
+  bank_underwriting: "Bank Underwriting",
+  offer_received: "Offer Received",
+  won: "Won / Signed",
+  lost: "Lost / Disqualified",
 };
 
 export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
@@ -45,22 +51,30 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
   onAddTaskTrigger,
   tasks,
   onCompleteTask,
-  activeBrokerage
+  activeBrokerage,
 }) => {
-  const [activeTab, setActiveTab] = useState<'emails' | 'triggers' | 'tasks'>('emails');
-  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate>(emailTemplates[0]);
+  const [activeTab, setActiveTab] = useState<"emails" | "triggers" | "tasks">(
+    "emails",
+  );
+  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate>(
+    emailTemplates[0],
+  );
   const [isEditingTemplate, setIsEditingTemplate] = useState(false);
   const [editedSubject, setEditedSubject] = useState(selectedTemplate.subject);
   const [editedBody, setEditedBody] = useState(selectedTemplate.body);
 
   // New task trigger form state
-  const [newTriggerStage, setNewTriggerStage] = useState<PipelineStage>('new');
-  const [newTriggerTitle, setNewTriggerTitle] = useState('');
+  const [newTriggerStage, setNewTriggerStage] = useState<PipelineStage>("new");
+  const [newTriggerTitle, setNewTriggerTitle] = useState("");
   const [newTriggerSla, setNewTriggerSla] = useState(2);
 
-  const tenantTemplates = emailTemplates.filter(t => t.brokerageId === activeBrokerage.id);
-  const tenantTriggers = taskTriggers.filter(t => t.brokerageId === activeBrokerage.id);
-  const tenantTasks = tasks.filter(t => t.brokerageId === activeBrokerage.id);
+  const tenantTemplates = emailTemplates.filter(
+    (t) => t.brokerageId === activeBrokerage.id,
+  );
+  const tenantTriggers = taskTriggers.filter(
+    (t) => t.brokerageId === activeBrokerage.id,
+  );
+  const tenantTasks = tasks.filter((t) => t.brokerageId === activeBrokerage.id);
 
   const handleSelectTemplate = (tpl: EmailTemplate) => {
     soundManager.playClick();
@@ -75,7 +89,7 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
     const updated = {
       ...selectedTemplate,
       subject: editedSubject,
-      body: editedBody
+      body: editedBody,
     };
     onUpdateEmailTemplate(updated);
     setSelectedTemplate(updated);
@@ -84,7 +98,7 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
 
   const handleInsertPlaceholder = (placeholder: string) => {
     soundManager.playClick();
-    setEditedBody(prev => prev + ' ' + placeholder);
+    setEditedBody((prev) => prev + " " + placeholder);
   };
 
   const handleCreateTaskTrigger = (e: React.FormEvent) => {
@@ -97,26 +111,25 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
       stage: newTriggerStage,
       title: newTriggerTitle.trim(),
       slaHours: newTriggerSla,
-      assigneeRole: 'advisor'
+      assigneeRole: "advisor",
     };
     onAddTaskTrigger(newTrig);
-    setNewTriggerTitle('');
+    setNewTriggerTitle("");
   };
 
   // Preview replacement of placeholders for demonstration
   const previewEmailBody = (body: string) => {
     return body
-      .replace(/{{client_name}}/g, 'Dr. Priya Patel')
-      .replace(/{{advisor_name}}/g, 'Lukas Becker')
+      .replace(/{{client_name}}/g, "Olivia Martin")
+      .replace(/{{advisor_name}}/g, "Alex Carter")
       .replace(/{{brokerage_name}}/g, activeBrokerage.name)
-      .replace(/{{property_city}}/g, 'Berlin-Prenzlauer Berg')
-      .replace(/{{portal_url}}/g, 'https://leadflow.de/portal/auth-token-8812')
-      .replace(/{{loan_amount}}/g, '€520,000');
+      .replace(/{{property_city}}/g, "Berlin-Prenzlauer Berg")
+      .replace(/{{portal_url}}/g, "https://leadflow.de/portal/auth-token-8812")
+      .replace(/{{loan_amount}}/g, "€520,000");
   };
 
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
-      
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-5 rounded-2xl border border-white/80 shadow-xs">
         <div>
@@ -127,7 +140,9 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
             </h2>
           </div>
           <p className="text-xs text-slate-600 mt-1 max-w-2xl">
-            Configure stage email templates with dynamic variable insertion, stage triggers, and column SLA tasks that notify advisors automatically.
+            Configure stage email templates with dynamic variable insertion,
+            stage triggers, and column SLA tasks that notify advisors
+            automatically.
           </p>
         </div>
 
@@ -136,10 +151,12 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
           <button
             onClick={() => {
               soundManager.playClick();
-              setActiveTab('emails');
+              setActiveTab("emails");
             }}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-              activeTab === 'emails' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              activeTab === "emails"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Email Templates ({tenantTemplates.length})
@@ -147,10 +164,12 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
           <button
             onClick={() => {
               soundManager.playClick();
-              setActiveTab('triggers');
+              setActiveTab("triggers");
             }}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-              activeTab === 'triggers' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              activeTab === "triggers"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Column Task Triggers ({tenantTriggers.length})
@@ -158,10 +177,12 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
           <button
             onClick={() => {
               soundManager.playClick();
-              setActiveTab('tasks');
+              setActiveTab("tasks");
             }}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-              activeTab === 'tasks' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              activeTab === "tasks"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Active Task Queue ({tenantTasks.length})
@@ -170,21 +191,22 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
       </div>
 
       {/* TAB 1: EMAIL TEMPLATES */}
-      {activeTab === 'emails' && (
+      {activeTab === "emails" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
           {/* Templates List */}
           <div className="space-y-3">
-            <span className="text-xs font-bold text-slate-900">Configured Stage Templates</span>
+            <span className="text-xs font-bold text-slate-900">
+              Configured Stage Templates
+            </span>
             <div className="space-y-2">
               {tenantTemplates.map((tpl) => (
                 <button
                   key={tpl.id}
                   onClick={() => handleSelectTemplate(tpl)}
                   className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer ${
-                    selectedTemplate.id === tpl.id 
-                      ? 'glass-panel ring-2 ring-slate-900 shadow-xs' 
-                      : 'bg-white/80 hover:bg-white border-slate-200/80'
+                    selectedTemplate.id === tpl.id
+                      ? "glass-panel ring-2 ring-slate-900 shadow-xs"
+                      : "bg-white/80 hover:bg-white border-slate-200/80"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -207,9 +229,12 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
           <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-white/80 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">{selectedTemplate.name}</h3>
+                <h3 className="text-sm font-bold text-slate-900">
+                  {selectedTemplate.name}
+                </h3>
                 <span className="text-[11px] text-slate-500">
-                  Trigger: Automatically sent when lead moves to <strong>{STAGE_LABELS[selectedTemplate.triggerStage]}</strong>
+                  Trigger: Automatically sent when lead moves to{" "}
+                  <strong>{STAGE_LABELS[selectedTemplate.triggerStage]}</strong>
                 </span>
               </div>
 
@@ -260,7 +285,9 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
 
             {/* Subject Input */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700">Email Subject Line</label>
+              <label className="text-xs font-semibold text-slate-700">
+                Email Subject Line
+              </label>
               {isEditingTemplate ? (
                 <input
                   type="text"
@@ -277,7 +304,9 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
 
             {/* Body */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700">Email Body & Placeholders</label>
+              <label className="text-xs font-semibold text-slate-700">
+                Email Body & Placeholders
+              </label>
               {isEditingTemplate ? (
                 <textarea
                   rows={8}
@@ -295,44 +324,55 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
             {/* Live Substituted Preview */}
             <div className="border-t border-slate-200/80 pt-3 space-y-1.5">
               <span className="text-[11px] font-bold text-slate-600 block">
-                Live Substituted Expat Preview (Simulated with Dr. Priya Patel):
+                Live Message Preview (Sample client: Olivia Martin):
               </span>
               <div className="p-3.5 rounded-xl bg-white border border-slate-200/80 text-xs text-slate-700 whitespace-pre-wrap shadow-xs">
                 {previewEmailBody(selectedTemplate.body)}
               </div>
             </div>
-
           </div>
-
         </div>
       )}
 
       {/* TAB 2: COLUMN TASK TRIGGERS */}
-      {activeTab === 'triggers' && (
+      {activeTab === "triggers" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
           {/* Create New Trigger Form */}
-          <form onSubmit={handleCreateTaskTrigger} className="glass-panel p-5 rounded-2xl border border-white/80 space-y-4">
-            <h3 className="text-sm font-bold text-slate-900">Create Pipeline Column Task Trigger</h3>
+          <form
+            onSubmit={handleCreateTaskTrigger}
+            className="glass-panel p-5 rounded-2xl border border-white/80 space-y-4"
+          >
+            <h3 className="text-sm font-bold text-slate-900">
+              Create Pipeline Column Task Trigger
+            </h3>
             <p className="text-xs text-slate-500">
-              When an expat lead lands in this column, automatically create this task with an advisor SLA.
+              When an expat lead lands in this column, automatically create this
+              task with an advisor SLA.
             </p>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">Pipeline Column Stage</label>
+              <label className="text-xs font-medium text-slate-700">
+                Pipeline Column Stage
+              </label>
               <select
                 value={newTriggerStage}
-                onChange={(e) => setNewTriggerStage(e.target.value as PipelineStage)}
+                onChange={(e) =>
+                  setNewTriggerStage(e.target.value as PipelineStage)
+                }
                 className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none cursor-pointer"
               >
                 {Object.entries(STAGE_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">Task Title & Directive</label>
+              <label className="text-xs font-medium text-slate-700">
+                Task Title & Directive
+              </label>
               <input
                 type="text"
                 placeholder="e.g. Call within 2 hours & verify Blue Card..."
@@ -344,7 +384,9 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">SLA Due Duration (Hours)</label>
+              <label className="text-xs font-medium text-slate-700">
+                SLA Due Duration (Hours)
+              </label>
               <input
                 type="number"
                 min="1"
@@ -366,10 +408,12 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
 
           {/* Active Triggers List */}
           <div className="lg:col-span-2 space-y-3">
-            <span className="text-xs font-bold text-slate-900">Active Column Triggers ({tenantTriggers.length})</span>
+            <span className="text-xs font-bold text-slate-900">
+              Active Column Triggers ({tenantTriggers.length})
+            </span>
             <div className="space-y-2">
               {tenantTriggers.map((trig) => (
-                <div 
+                <div
                   key={trig.id}
                   className="glass-panel p-4 rounded-xl border border-white/80 shadow-xs flex items-center justify-between gap-4"
                 >
@@ -378,12 +422,16 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
                       <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                         {STAGE_LABELS[trig.stage]}
                       </span>
-                      <h4 className="text-xs font-bold text-slate-900">{trig.title}</h4>
+                      <h4 className="text-xs font-bold text-slate-900">
+                        {trig.title}
+                      </h4>
                     </div>
                     <div className="flex items-center gap-2 text-[11px] text-slate-500">
                       <span>Assigned to: Lead's Mortgage Advisor</span>
                       <span>·</span>
-                      <span className="font-mono">SLA: {trig.slaHours} Hours</span>
+                      <span className="font-mono">
+                        SLA: {trig.slaHours} Hours
+                      </span>
                     </div>
                   </div>
 
@@ -394,12 +442,11 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
               ))}
             </div>
           </div>
-
         </div>
       )}
 
       {/* TAB 3: ACTIVE TASK QUEUE (Requirement 10: overdue tasks stand out) */}
-      {activeTab === 'tasks' && (
+      {activeTab === "tasks" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-900">
@@ -415,11 +462,11 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
               <div
                 key={t.id}
                 className={`p-4 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                  t.isCompleted 
-                    ? 'bg-slate-50/70 border-slate-200 opacity-60' 
-                    : t.isOverdue 
-                      ? 'bg-rose-50/90 border-2 border-rose-400 shadow-md' 
-                      : 'glass-panel border-white/80 shadow-xs'
+                  t.isCompleted
+                    ? "bg-slate-50/70 border-slate-200 opacity-60"
+                    : t.isOverdue
+                      ? "bg-rose-50/90 border-2 border-rose-400 shadow-md"
+                      : "glass-panel border-white/80 shadow-xs"
                 }`}
               >
                 <div className="space-y-1">
@@ -429,15 +476,21 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
                         OVERDUE SLA
                       </span>
                     )}
-                    <span className="text-xs font-bold text-slate-900">{t.title}</span>
+                    <span className="text-xs font-bold text-slate-900">
+                      {t.title}
+                    </span>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600">
-                    <span>Lead: <strong>{t.leadName}</strong></span>
+                    <span>
+                      Lead: <strong>{t.leadName}</strong>
+                    </span>
                     <span>·</span>
                     <span>Advisor: {t.assignedToAdvisor}</span>
                     <span>·</span>
-                    <span className={`font-mono font-semibold ${t.isOverdue && !t.isCompleted ? 'text-rose-700' : 'text-slate-600'}`}>
+                    <span
+                      className={`font-mono font-semibold ${t.isOverdue && !t.isCompleted ? "text-rose-700" : "text-slate-600"}`}
+                    >
                       Due: {t.dueAt}
                     </span>
                   </div>
@@ -467,7 +520,6 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
           </div>
         </div>
       )}
-
     </div>
   );
 };
