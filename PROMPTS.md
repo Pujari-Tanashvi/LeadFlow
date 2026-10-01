@@ -144,6 +144,34 @@ Commit changes.
 
 First append this exact prompt to PROMPTS.md.
 
+Implement an external lead webhook:
+
+POST /api/webhooks/leads
+
+Accept:
+name
+email
+phone
+source
+propertyType
+loanAmount
+
+Validate and normalize the data.
+
+Protect the webhook with a secret from environment variables.
+
+Run duplicate detection before creating the lead.
+
+Create the lead and emit the real-time lead.created event.
+
+Return proper HTTP responses.
+
+Do not redesign the frontend.
+Test the webhook locally.
+Commit changes.
+
+First append this exact prompt to PROMPTS.md.
+
 Implement LeadFlow duplicate lead detection.
 
 Normalize email and phone before comparison.

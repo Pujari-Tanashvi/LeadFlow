@@ -16,6 +16,10 @@ const { normalizeEmail, normalizeLeadName, normalizePhone } =
   await import("../src/utils/leadIdentity.js");
 const { getLeadsMissingIdentityFilter } =
   await import("../src/services/leadIdentityService.js");
+const { parseExternalLeadInput } =
+  await import("../src/utils/webhookLeadInput.js");
+const { webhookSecretMatches } =
+  await import("../src/middleware/webhookAuthMiddleware.js");
 
 describe("authentication primitives", () => {
   it("hashes passwords and verifies only the matching password", async () => {
@@ -160,6 +164,54 @@ describe("lead tenant query construction", () => {
         { nameNormalized: { $exists: false } },
       ],
     });
+  });
+
+  it("validates and normalizes external webhook lead data", () => {
+    const result = parseExternalLeadInput({
+      name: "  Jamie Chen ",
+      email: " JAMIE.CHEN@EXAMPLE.COM ",
+      phone: "+1 (415) 555-0100",
+      source: " Broker referral ",
+      propertyType: "Condo",
+      loanAmount: 485000,
+    });
+
+    assert.ok(result.input);
+    assert.equal(result.input.name, "Jamie Chen");
+    assert.equal(result.input.email, "jamie.chen@example.com");
+    assert.equal(result.input.phoneNormalized, "14155550100");
+    assert.equal(result.input.source, "Broker referral");
+    assert.equal(result.input.nameNormalized, "jamie chen");
+  });
+
+  it("rejects invalid or extra webhook fields", () => {
+    assert.equal(
+      parseExternalLeadInput({ name: "Only a name" }).error?.includes("email"),
+      true,
+    );
+    assert.equal(
+      parseExternalLeadInput({
+        name: "Jamie Chen",
+        email: "jamie@example.com",
+        phone: "---",
+        source: "Referral",
+        propertyType: "Condo",
+        loanAmount: 100,
+      }).error?.includes("phone"),
+      true,
+    );
+    assert.match(
+      parseExternalLeadInput({ name: "Jamie", brokerageId: "tenant" }).error ??
+        "",
+      /Unsupported field/,
+    );
+  });
+
+  it("compares webhook secrets without accepting missing or wrong values", () => {
+    assert.equal(webhookSecretMatches("secret-value", "secret-value"), true);
+    assert.equal(webhookSecretMatches("wrong-value", "secret-value"), false);
+    assert.equal(webhookSecretMatches(undefined, "secret-value"), false);
+    assert.equal(webhookSecretMatches("secret-value", undefined), false);
   });
 });
 

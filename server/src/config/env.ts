@@ -11,4 +11,6 @@ export const env = {
   frontendOrigin: process.env.FRONTEND_ORIGIN ?? "http://localhost:3000",
   mongoUri: process.env.MONGODB_URI,
   jwtSecret: process.env.JWT_SECRET,
+  leadWebhookSecret: process.env.LEAD_WEBHOOK_SECRET,
+  leadWebhookBrokerageId: process.env.LEAD_WEBHOOK_BROKERAGE_ID,
 };

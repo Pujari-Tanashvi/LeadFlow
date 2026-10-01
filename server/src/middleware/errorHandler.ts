@@ -6,6 +6,19 @@ export const errorHandler: ErrorRequestHandler = (
   response,
   _next,
 ) => {
+  if (error && typeof error === "object" && "type" in error) {
+    if (error.type === "entity.parse.failed") {
+      response
+        .status(400)
+        .json({ error: "Request body must contain valid JSON." });
+      return;
+    }
+    if (error.type === "entity.too.large") {
+      response.status(413).json({ error: "Request body is too large." });
+      return;
+    }
+  }
+
   console.error(error);
 
   if (error && typeof error === "object" && "statusCode" in error) {

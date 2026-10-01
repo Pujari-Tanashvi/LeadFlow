@@ -7,3 +7,4 @@ dist
 .vite
 .test-mongo-data
 .lead-test-data
+.webhook-test-data
