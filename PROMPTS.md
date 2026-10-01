@@ -141,3 +141,30 @@ Record an Activity whenever a lead changes stage.
 Do not redesign the frontend.
 Run and fix errors.
 Commit changes.
+
+First append this exact prompt to PROMPTS.md.
+
+Implement LeadFlow duplicate lead detection.
+
+Normalize email and phone before comparison.
+
+Detect duplicates using:
+
+- email
+- phone
+- name + phone
+
+When a duplicate is detected, return the existing lead information and allow:
+
+- view existing
+- create anyway
+- merge
+
+Duplicate checks must stay inside the same brokerage.
+
+Add useful indexes for duplicate detection.
+
+Do not redesign the UI.
+
+Test and fix errors.
+Commit changes.

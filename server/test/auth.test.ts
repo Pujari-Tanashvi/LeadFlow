@@ -6,11 +6,16 @@ process.env.JWT_SECRET = "test-secret-that-is-long-enough-for-unit-tests";
 const { createAccessToken, hashPassword, verifyAccessToken, verifyPassword } =
   await import("../src/services/authService.js");
 const { BrokerageModel } = await import("../src/models/Brokerage.js");
+const { LeadModel } = await import("../src/models/Lead.js");
 const { UserModel } = await import("../src/models/User.js");
 const { brokerageFilter, canAccessBrokerage } =
   await import("../src/utils/tenantAccess.js");
 const { buildLeadListFilter, escapeRegex, getLeadTenantId } =
   await import("../src/utils/leadQuery.js");
+const { normalizeEmail, normalizeLeadName, normalizePhone } =
+  await import("../src/utils/leadIdentity.js");
+const { getLeadsMissingIdentityFilter } =
+  await import("../src/services/leadIdentityService.js");
 
 describe("authentication primitives", () => {
   it("hashes passwords and verifies only the matching password", async () => {
@@ -94,6 +99,16 @@ describe("database model validation", () => {
 
     assert.ok(brokerage.validateSync()?.errors.name);
   });
+
+  it("indexes normalized duplicate identities within a brokerage", () => {
+    const indexes = LeadModel.schema
+      .indexes()
+      .map(([keys]) => Object.keys(keys).join(","));
+
+    assert.ok(indexes.includes("brokerageId,emailNormalized"));
+    assert.ok(indexes.includes("brokerageId,phoneNormalized"));
+    assert.ok(indexes.includes("brokerageId,nameNormalized,phoneNormalized"));
+  });
 });
 
 describe("lead tenant query construction", () => {
@@ -126,6 +141,25 @@ describe("lead tenant query construction", () => {
     assert.equal(escapeRegex("Jamie.+"), "Jamie\\.\\+");
     assert.equal(filter.$or?.[0]?.name?.test("Jamie.+ Chen"), true);
     assert.equal(filter.$or?.[0]?.name?.test("Jamie Lee Chen"), false);
+  });
+
+  it("normalizes email, phone, and name for duplicate comparisons", () => {
+    assert.equal(
+      normalizeEmail("  JANE.DOE@Example.COM "),
+      "jane.doe@example.com",
+    );
+    assert.equal(normalizePhone("+1 (415) 555-0100"), "14155550100");
+    assert.equal(normalizeLeadName("  José   Smith "), "jose smith");
+  });
+
+  it("backfills leads missing any normalized identity key", () => {
+    assert.deepEqual(getLeadsMissingIdentityFilter(), {
+      $or: [
+        { emailNormalized: { $exists: false } },
+        { phoneNormalized: { $exists: false } },
+        { nameNormalized: { $exists: false } },
+      ],
+    });
   });
 });
 

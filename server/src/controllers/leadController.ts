@@ -3,7 +3,13 @@ import { Types } from "mongoose";
 import { ActivityModel } from "../models/Activity.js";
 import { LEAD_STAGES, LeadModel, type LeadStage } from "../models/Lead.js";
 import { UserModel } from "../models/User.js";
+import { findDuplicateLeads } from "../services/leadDuplicateService.js";
 import { buildLeadListFilter, getLeadTenantId } from "../utils/leadQuery.js";
+import {
+  normalizeEmail,
+  normalizeLeadName,
+  normalizePhone,
+} from "../utils/leadIdentity.js";
 
 const editableFields = [
   "name",
@@ -17,7 +23,10 @@ const editableFields = [
 ] as const;
 
 type EditableField = (typeof editableFields)[number];
-type LeadUpdate = Partial<Record<EditableField, unknown>>;
+type LeadUpdate = Partial<Record<EditableField, unknown>> &
+  Partial<
+    Record<"emailNormalized" | "phoneNormalized" | "nameNormalized", string>
+  >;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -75,6 +84,9 @@ function parseLeadInput(
     }
 
     const normalized = fieldValue.trim();
+    if (field === "phone" && !normalizePhone(normalized)) {
+      return { error: "phone must contain at least one digit." };
+    }
     if (field === "stage") {
       if (!LEAD_STAGES.includes(normalized as LeadStage)) {
         return { error: `stage must be one of: ${LEAD_STAGES.join(", ")}.` };
@@ -96,7 +108,18 @@ function parseLeadInput(
     if (field === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
       return { error: "email must be a valid email address." };
     }
-    update[field] = field === "email" ? normalized.toLowerCase() : normalized;
+    if (field === "email") {
+      update.email = normalizeEmail(normalized);
+      update.emailNormalized = normalizeEmail(normalized);
+    } else if (field === "phone") {
+      update.phone = normalized;
+      update.phoneNormalized = normalizePhone(normalized);
+    } else if (field === "name") {
+      update.name = normalized;
+      update.nameNormalized = normalizeLeadName(normalized);
+    } else {
+      update[field] = normalized;
+    }
   }
 
   const requiredFields = [
@@ -144,6 +167,21 @@ function getLeadId(value: string): Types.ObjectId | null {
 
 function sendInvalidLeadId(response: Parameters<RequestHandler>[1]): void {
   response.status(400).json({ error: "Lead ID must be a valid MongoDB ID." });
+}
+
+function sendDuplicateResponse(
+  response: Parameters<RequestHandler>[1],
+  matches: Awaited<ReturnType<typeof findDuplicateLeads>>,
+  allowCreateAnyway: boolean,
+): void {
+  response.status(409).json({
+    duplicate: true,
+    error: "Potential duplicate lead found.",
+    matches,
+    actions: allowCreateAnyway
+      ? ["view_existing", "create_anyway", "merge"]
+      : ["view_existing", "merge"],
+  });
 }
 
 export const listLeads: RequestHandler = async (request, response, next) => {
@@ -242,7 +280,31 @@ export const listLeads: RequestHandler = async (request, response, next) => {
 export const createLead: RequestHandler = async (request, response, next) => {
   try {
     const brokerageId = getLeadTenantId(request.auth!);
-    const parsed = parseLeadInput(request.body, false);
+    const queryOverride = request.query.createAnyway;
+    if (
+      queryOverride !== undefined &&
+      queryOverride !== "true" &&
+      queryOverride !== "false"
+    ) {
+      response
+        .status(400)
+        .json({ error: "createAnyway must be true or false." });
+      return;
+    }
+
+    let createAnyway = queryOverride === "true";
+    let leadBody = request.body;
+    if (isRecord(leadBody) && "createAnyway" in leadBody) {
+      if (typeof leadBody.createAnyway !== "boolean") {
+        response.status(400).json({ error: "createAnyway must be a boolean." });
+        return;
+      }
+      createAnyway ||= leadBody.createAnyway;
+      leadBody = { ...leadBody };
+      delete (leadBody as Record<string, unknown>).createAnyway;
+    }
+
+    const parsed = parseLeadInput(leadBody, false);
     if (parsed.error || !parsed.update) {
       response.status(400).json({ error: parsed.error ?? "Invalid lead." });
       return;
@@ -255,6 +317,16 @@ export const createLead: RequestHandler = async (request, response, next) => {
       response.status(400).json({
         error: "assignedAdvisor must be an advisor in your brokerage.",
       });
+      return;
+    }
+
+    const duplicates = await findDuplicateLeads(brokerageId, {
+      name: parsed.update.name as string,
+      email: parsed.update.email as string,
+      phone: parsed.update.phone as string,
+    });
+    if (duplicates.length && !createAnyway) {
+      sendDuplicateResponse(response, duplicates, true);
       return;
     }
 
@@ -335,6 +407,27 @@ async function updateLead(
 
     const fromStage = existing.stage;
     const requestedStage = parsed.update.stage as LeadStage | undefined;
+
+    if (
+      "name" in parsed.update ||
+      "email" in parsed.update ||
+      "phone" in parsed.update
+    ) {
+      const duplicates = await findDuplicateLeads(
+        brokerageId,
+        {
+          name: (parsed.update.name ?? existing.name) as string,
+          email: (parsed.update.email ?? existing.email) as string,
+          phone: (parsed.update.phone ?? existing.phone) as string,
+        },
+        leadId,
+      );
+      if (duplicates.length) {
+        sendDuplicateResponse(response, duplicates, false);
+        return;
+      }
+    }
+
     const lead = await LeadModel.findOneAndUpdate(
       requestedStage
         ? { _id: leadId, brokerageId, stage: fromStage }
@@ -349,11 +442,9 @@ async function updateLead(
         brokerageId,
       });
       if (stillInBrokerage) {
-        response
-          .status(409)
-          .json({
-            error: "Lead stage changed concurrently. Reload and retry.",
-          });
+        response.status(409).json({
+          error: "Lead stage changed concurrently. Reload and retry.",
+        });
         return;
       }
       response.status(404).json({ error: "Lead not found." });
@@ -391,6 +482,81 @@ export const patchLead: RequestHandler = (request, response, next) => {
 
 export const patchLeadStage: RequestHandler = (request, response, next) => {
   void updateLead(request, response, next, true);
+};
+
+export const mergeLead: RequestHandler = async (request, response, next) => {
+  const leadId = getLeadId(request.params.id);
+  if (!leadId) return sendInvalidLeadId(response);
+  if (!isRecord(request.body) || typeof request.body.duplicateId !== "string") {
+    response.status(400).json({ error: "duplicateId is required." });
+    return;
+  }
+
+  const duplicateId = getLeadId(request.body.duplicateId);
+  if (!duplicateId) {
+    response
+      .status(400)
+      .json({ error: "duplicateId must be a valid MongoDB ID." });
+    return;
+  }
+  if (duplicateId.equals(leadId)) {
+    response
+      .status(400)
+      .json({ error: "A lead cannot be merged into itself." });
+    return;
+  }
+
+  try {
+    const brokerageId = getLeadTenantId(request.auth!);
+    const [primary, duplicate] = await Promise.all([
+      LeadModel.findOne({ _id: leadId, brokerageId }).exec(),
+      LeadModel.findOne({ _id: duplicateId, brokerageId }).exec(),
+    ]);
+    if (!primary || !duplicate) {
+      response.status(404).json({ error: "Lead not found." });
+      return;
+    }
+
+    const possibleMatches = await findDuplicateLeads(
+      brokerageId,
+      { name: primary.name, email: primary.email, phone: primary.phone },
+      leadId,
+    );
+    if (
+      !possibleMatches.some(
+        (match) => String(match.lead._id) === duplicateId.toString(),
+      )
+    ) {
+      response
+        .status(409)
+        .json({ error: "The selected lead is not a detected duplicate." });
+      return;
+    }
+
+    if (!primary.assignedAdvisor && duplicate.assignedAdvisor) {
+      primary.assignedAdvisor = duplicate.assignedAdvisor;
+    }
+    await primary.save();
+    await ActivityModel.updateMany(
+      { leadId: duplicateId, brokerageId },
+      { $set: { leadId } },
+    ).exec();
+
+    const removed = await LeadModel.findOneAndDelete({
+      _id: duplicateId,
+      brokerageId,
+    }).exec();
+    if (!removed) {
+      response.status(409).json({
+        error: "Duplicate lead changed during merge. Reload and retry.",
+      });
+      return;
+    }
+
+    response.status(200).json({ lead: primary, mergedLeadId: duplicateId });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const deleteLead: RequestHandler = async (request, response, next) => {

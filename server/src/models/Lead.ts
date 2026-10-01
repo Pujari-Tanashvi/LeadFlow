@@ -22,7 +22,10 @@ const leadSchema = new Schema(
       lowercase: true,
       maxlength: 254,
     },
+    emailNormalized: { type: String, select: false },
     phone: { type: String, required: true, trim: true, maxlength: 40 },
+    phoneNormalized: { type: String, select: false },
+    nameNormalized: { type: String, select: false },
     source: { type: String, required: true, trim: true, maxlength: 100 },
     propertyType: { type: String, required: true, trim: true, maxlength: 100 },
     loanAmount: { type: Number, required: true, min: 0 },
@@ -44,6 +47,9 @@ const leadSchema = new Schema(
 
 leadSchema.index({ brokerageId: 1, stage: 1, createdAt: -1 });
 leadSchema.index({ brokerageId: 1, assignedAdvisor: 1, createdAt: -1 });
+leadSchema.index({ brokerageId: 1, emailNormalized: 1 });
+leadSchema.index({ brokerageId: 1, phoneNormalized: 1 });
+leadSchema.index({ brokerageId: 1, nameNormalized: 1, phoneNormalized: 1 });
 
 export type Lead = InferSchemaType<typeof leadSchema>;
 export const LeadModel = model("Lead", leadSchema);
