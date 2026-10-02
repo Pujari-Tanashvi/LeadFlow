@@ -77,6 +77,8 @@ const taskSchema = new Schema(
 taskSchema.index({ brokerageId: 1, status: 1, dueDate: 1 });
 taskSchema.index({ brokerageId: 1, assignedAdvisor: 1, status: 1 });
 taskSchema.index({ brokerageId: 1, leadId: 1 });
+// Serves the dashboard's overdue-task count scoped to a brokerage.
+taskSchema.index({ brokerageId: 1, overdue: 1 });
 taskSchema.index(
   { brokerageId: 1, automationKey: 1 },
   {

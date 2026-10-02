@@ -4,6 +4,7 @@ import { env } from "../config/env.js";
 import { findDuplicateLeads } from "../services/leadDuplicateService.js";
 import { LeadModel } from "../models/Lead.js";
 import { emitLeadCreated } from "../sockets/index.js";
+import { publishDashboardStats } from "../services/dashboardService.js";
 import { parseExternalLeadInput } from "../utils/webhookLeadInput.js";
 
 function serializeLead(lead: InstanceType<typeof LeadModel>) {
@@ -52,6 +53,8 @@ export const createLeadFromWebhook: RequestHandler = async (
     const lead = await LeadModel.create({ ...parsed.input, brokerageId });
     const responseLead = serializeLead(lead);
     emitLeadCreated(brokerageId.toString(), responseLead);
+    // Refresh brokerage dashboards (total leads / stage distribution change).
+    void publishDashboardStats(brokerageId);
     response.status(201).json({ lead: responseLead });
   } catch (error) {
     next(error);

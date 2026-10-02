@@ -41,6 +41,8 @@ const activitySchema = new Schema(
 );
 
 activitySchema.index({ brokerageId: 1, leadId: 1, createdAt: -1 });
+// Serves the dashboard's recent-activity feed (latest first) per brokerage.
+activitySchema.index({ brokerageId: 1, createdAt: -1 });
 
 export type Activity = InferSchemaType<typeof activitySchema>;
 export const ActivityModel = model("Activity", activitySchema);

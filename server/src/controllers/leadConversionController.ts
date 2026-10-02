@@ -1,5 +1,7 @@
 import type { RequestHandler } from "express";
+import { Types } from "mongoose";
 import { convertLeadToClient } from "../services/leadConversionService.js";
+import { publishDashboardStats } from "../services/dashboardService.js";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -43,6 +45,11 @@ export const convertLead: RequestHandler = async (request, response, next) => {
       auth: request.auth,
       advisorId,
     });
+    // Conversion changes the won count and adds an active client, so refresh
+    // the brokerage dashboard. Best-effort: it must never fail the response.
+    if (request.auth.brokerageId) {
+      void publishDashboardStats(new Types.ObjectId(request.auth.brokerageId));
+    }
     response.status(201).json(result);
   } catch (error) {
     next(error);

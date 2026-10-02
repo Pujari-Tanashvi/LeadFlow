@@ -31,6 +31,15 @@ export function emitTaskEvent(
   socketServer?.to(`brokerage:${brokerageId}`).emit(`task.${event}`, task);
 }
 
+/**
+ * Broadcast a fresh dashboard summary to a brokerage so displayed statistics
+ * stay current after a lead/client change. Task-derived figures (overdue
+ * tasks) already reach clients through the existing task.* events.
+ */
+export function emitDashboardStats(brokerageId: string, stats: unknown): void {
+  socketServer?.to(`brokerage:${brokerageId}`).emit("dashboard.stats", stats);
+}
+
 export function attachSockets(
   httpServer: HttpServer,
   frontendOrigin: string,
