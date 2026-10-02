@@ -37,6 +37,7 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
   const [phone, setPhone] = useState("+49 176 8920 3311");
   const [nationality, setNationality] = useState("British (EU Blue Card)");
   const [targetCity, setTargetCity] = useState("Berlin-Kreuzberg");
+  const [propertyType, setPropertyType] = useState("Apartment");
   const [loanAmountEur, setLoanAmountEur] = useState(480000);
   const [propertyPriceEur, setPropertyPriceEur] = useState(580000);
   const [employmentStatus, setEmploymentStatus] =
@@ -89,6 +90,7 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
       phone,
       nationality,
       targetCity,
+      propertyType,
       loanAmountEur,
       propertyPriceEur,
       employmentStatus,
@@ -273,6 +275,26 @@ export const LeadIngestionModal: React.FC<LeadIngestionModalProps> = ({
                 onChange={(e) => setTargetCity(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none"
               />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-slate-700">
+                Property Type
+              </label>
+              <select
+                required
+                value={propertyType}
+                onChange={(e) => setPropertyType(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none"
+              >
+                <option value="Apartment">Apartment</option>
+                <option value="House">House</option>
+                <option value="Townhouse">Townhouse</option>
+                <option value="Investment property">
+                  Investment property
+                </option>
+                <option value="Other">Other</option>
+              </select>
             </div>
           </div>
 

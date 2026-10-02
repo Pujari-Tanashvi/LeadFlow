@@ -44,6 +44,8 @@ export const DocumentVerificationHub: React.FC<
     "Flagged Credit_Report_2026.pdf: Updated copy requested",
   ]);
 
+  // Documents belong to a client dossier, so the hub selects a client and
+  // reads the documents filed under that client's id.
   const tenantClients = leads.filter(
     (l) =>
       l.brokerageId === activeBrokerage.id &&
@@ -53,7 +55,9 @@ export const DocumentVerificationHub: React.FC<
   );
   const currentLead =
     leads.find((l) => l.id === selectedLeadId) || tenantClients[0] || leads[0];
-  const clientDocs = documents.filter((d) => d.leadId === currentLead?.id);
+  const clientDocs = documents.filter(
+    (d) => d.leadId === (currentLead?.clientId ?? currentLead?.id),
+  );
 
   const filteredDocs =
     activeCategory === "all"

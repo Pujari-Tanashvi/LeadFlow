@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { DESIGN_SHOWCASE_ITEMS } from "../data/mockData";
+import { DESIGN_SHOWCASE_ITEMS } from "../data/showcaseContent";
 import { DesignShowcaseItem } from "../types";
 import { soundManager } from "../utils/audio";
 import {

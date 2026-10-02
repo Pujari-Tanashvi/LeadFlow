@@ -41,6 +41,7 @@ export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({
   const stageCounts = {
     new: tenantLeads.filter((l) => l.stage === "new").length,
     contacted: tenantLeads.filter((l) => l.stage === "contacted").length,
+    qualified: tenantLeads.filter((l) => l.stage === "qualified").length,
     doc_gathering: tenantLeads.filter((l) => l.stage === "doc_gathering")
       .length,
     bank_underwriting: tenantLeads.filter(
@@ -155,6 +156,11 @@ export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({
               label: "Contacted",
               count: stageCounts.contacted,
               bg: "bg-indigo-500",
+            },
+            {
+              label: "Qualified",
+              count: stageCounts.qualified,
+              bg: "bg-sky-500",
             },
             {
               label: "Doc Gathering",

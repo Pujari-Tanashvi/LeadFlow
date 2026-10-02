@@ -15,12 +15,22 @@ export interface RegisterInput {
   password: string;
 }
 
+export interface AuthenticatedBrokerage {
+  id: string;
+  name: string;
+}
+
 export interface AuthenticatedUser {
   id: string;
   email: string;
   fullName: string;
   role: UserRole;
   brokerageId: string | null;
+  /**
+   * Denormalized brokerage identity so the client never has to guess which
+   * tenant it is operating in. Always derived from the signed-in account.
+   */
+  brokerage: AuthenticatedBrokerage | null;
 }
 
 export interface AuthResult {
@@ -28,12 +38,31 @@ export interface AuthResult {
   user: AuthenticatedUser;
 }
 
+/**
+ * Normalize a brokerage reference (raw ObjectId, populated document, or plain
+ * id) into the safe public brokerage shape returned to clients.
+ */
+function toBrokerage(value: unknown): AuthenticatedBrokerage | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as {
+    _id?: { toString(): string };
+    id?: string;
+    name?: string;
+  };
+  const id = record._id ? record._id.toString() : record.id;
+  if (!id) return null;
+  return { id, name: typeof record.name === "string" ? record.name : "" };
+}
+
 function toAuthenticatedUser(user: {
   _id: { toString(): string };
   email: string;
   fullName: string;
   role: UserRole;
-  brokerageId?: { toString(): string } | null;
+  brokerageId?:
+    | { toString(): string; name?: string }
+    | { _id: { toString(): string }; name?: string }
+    | null;
 }): AuthenticatedUser {
   return {
     id: user._id.toString(),
@@ -41,7 +70,24 @@ function toAuthenticatedUser(user: {
     fullName: user.fullName,
     role: user.role,
     brokerageId: user.brokerageId?.toString() ?? null,
+    brokerage: toBrokerage(user.brokerageId),
   };
+}
+
+/** Resolve the brokerage name for a user document whose ref is not populated. */
+async function brokerageFor(
+  user: { brokerageId?: unknown },
+): Promise<AuthenticatedBrokerage | null> {
+  const reference = toBrokerage(user.brokerageId);
+  if (!reference) return null;
+  if (reference.name) return reference;
+  const brokerage = await BrokerageModel.findById(reference.id)
+    .select("name")
+    .lean()
+    .exec();
+  return brokerage
+    ? { id: reference.id, name: brokerage.name ?? "" }
+    : { id: reference.id, name: "" };
 }
 
 export async function registerBrokerage(
@@ -73,6 +119,8 @@ export async function registerBrokerage(
     });
     createdUserId = user._id;
     const safeUser = toAuthenticatedUser(user);
+    // The freshly created brokerage name is already known, no extra lookup.
+    safeUser.brokerage = { id: brokerage._id.toString(), name: brokerage.name };
 
     return { user: safeUser, token: createAccessToken(safeUser.id) };
   } catch (error) {
@@ -104,6 +152,7 @@ export async function login(
   }
 
   const safeUser = toAuthenticatedUser(user);
+  safeUser.brokerage = await brokerageFor(user);
   return { user: safeUser, token: createAccessToken(safeUser.id) };
 }
 
@@ -139,5 +188,11 @@ export async function getAuthenticatedUser(
     .select("email fullName role brokerageId")
     .exec();
 
-  return user ? toAuthenticatedUser(user) : null;
+  if (!user) return null;
+  // The brokerage id must stay a raw string id for the tenant middleware and
+  // the socket rooms, so the display name is resolved with a separate lookup
+  // instead of populating (and object-ifying) the reference.
+  const safeUser = toAuthenticatedUser(user);
+  safeUser.brokerage = await brokerageFor(user);
+  return safeUser;
 }

@@ -39,7 +39,9 @@ export const requireAuthentication: RequestHandler = async (
       email: user.email,
       fullName: user.fullName,
       role: user.role,
-      brokerageId: user.brokerageId,
+      // Always a plain string id: the tenant middleware validates it with
+      // Types.ObjectId.isValid and builds queries from it.
+      brokerageId: user.brokerageId ? String(user.brokerageId) : null,
     };
     next();
   } catch (error) {

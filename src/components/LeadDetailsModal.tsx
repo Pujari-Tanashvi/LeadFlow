@@ -41,7 +41,10 @@ export const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({
 
   if (!lead) return null;
 
-  const leadDocs = documents.filter((d) => d.leadId === lead.id);
+  // Documents belong to the client dossier created from this lead.
+  const leadDocs = documents.filter(
+    (d) => d.leadId === (lead.clientId ?? lead.id),
+  );
   const leadTasks = tasks.filter((t) => t.leadId === lead.id);
 
   const handleAddNote = (e: React.FormEvent) => {

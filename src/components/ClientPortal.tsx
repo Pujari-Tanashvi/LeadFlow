@@ -36,10 +36,16 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [uploadToast, setUploadToast] = useState<string | null>(null);
 
-  const clientDocs = documents.filter((d) => d.leadId === currentClient.id);
+  // Documents are filed under the client dossier id, so match on the converted
+  // client id when the lead has one.
+  const clientDocs = documents.filter(
+    (d) => d.leadId === (currentClient.clientId ?? currentClient.id),
+  );
+  // A brokerage may have no advisors on record yet; never render a blank one.
   const advisor =
     advisors.find((a) => a.id === currentClient.assignedAdvisorId) ||
-    advisors[0];
+    advisors[0] ||
+    null;
 
   const approvedCount = clientDocs.filter(
     (d) => d.status === "approved",
@@ -312,36 +318,47 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
               Your Dedicated Mortgage Specialist
             </h3>
 
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 text-white font-bold flex items-center justify-center text-sm shadow-md">
-                {advisor.avatar}
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-slate-900">
-                  {advisor.name}
-                </h4>
-                <p className="text-xs text-slate-500">{advisor.role}</p>
-                <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 font-semibold mt-0.5">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-                  <span>Available on Direct Line</span>
+            {advisor ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 text-white font-bold flex items-center justify-center text-sm shadow-md">
+                    {advisor.avatar}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">
+                      {advisor.name}
+                    </h4>
+                    <p className="text-xs text-slate-500">{advisor.role}</p>
+                    <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 font-semibold mt-0.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                      <span>Available on Direct Line</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="space-y-2 border-t border-slate-200/80 pt-3 text-xs">
-              <div className="flex items-center gap-2 text-slate-700">
-                <Mail className="w-3.5 h-3.5 text-slate-400" />
-                <span className="truncate">{advisor.email}</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-700">
-                <Phone className="w-3.5 h-3.5 text-slate-400" />
-                <span>+49 30 8920 4410 (Direct Ext. 104)</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-700">
-                <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                <span>{brokerage.city} Office</span>
-              </div>
-            </div>
+                <div className="space-y-2 border-t border-slate-200/80 pt-3 text-xs">
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <Mail className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="truncate">
+                      {advisor.email || "Contact via your brokerage"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                    <span>+49 30 8920 4410 (Direct Ext. 104)</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{brokerage.city || brokerage.name} Office</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-slate-500">
+                An advisor has not been assigned to your case yet. Your brokerage
+                will introduce you shortly.
+              </p>
+            )}
 
             <div className="p-3 rounded-xl bg-blue-50/80 border border-blue-200 text-xs text-blue-900 leading-relaxed">
               "Hi {currentClient.name}, your application looks solid. Once your

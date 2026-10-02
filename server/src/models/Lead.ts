@@ -28,6 +28,17 @@ const leadSchema = new Schema(
     nameNormalized: { type: String, select: false },
     source: { type: String, required: true, trim: true, maxlength: 100 },
     propertyType: { type: String, required: true, trim: true, maxlength: 100 },
+    // Optional presentation fields captured by the intake forms / webhook. They
+    // are not required to create a lead, they only enrich the workspace views.
+    nationality: { type: String, trim: true, maxlength: 100, default: "" },
+    targetCity: { type: String, trim: true, maxlength: 100, default: "" },
+    employmentStatus: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+      default: "",
+    },
+    propertyPriceEur: { type: Number, default: null, min: 0 },
     loanAmount: { type: Number, required: true, min: 0 },
     assignedAdvisor: {
       type: Schema.Types.ObjectId,
