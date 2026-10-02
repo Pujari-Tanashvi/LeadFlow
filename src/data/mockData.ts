@@ -8,6 +8,13 @@ import {
   LeadTask,
   DesignShowcaseItem,
 } from "../types";
+// Resolve the generated image assets through the bundler (instead of the old
+// "/src/assets/images/..." string paths, which were never emitted into the
+// production build and therefore disappeared on the dashboard).
+import leadflowPipelineGlass from "../assets/images/leadflow_pipeline_glass_1790785552441.jpg";
+import leadflowHeroNeoApple from "../assets/images/leadflow_hero_neo_apple_1790785536994.jpg";
+import leadflowDocVerification from "../assets/images/leadflow_doc_verification_1790785565858.jpg";
+import leadflowClientPortal from "../assets/images/leadflow_client_portal_1790785579057.jpg";
 
 export const BROKERAGES: Brokerage[] = [
   {
@@ -476,7 +483,7 @@ export const DESIGN_SHOWCASE_ITEMS: DesignShowcaseItem[] = [
     id: "live-lead-pipeline",
     title: "Live Lead Pipeline",
     subtitle: "Olivia Martin · €520,000 · Berlin Prenzlauer Berg",
-    imagePath: "/src/assets/images/leadflow_pipeline_glass_1790785552441.jpg",
+    imagePath: leadflowPipelineGlass,
     aspectRatio: "16:9",
     description:
       "New enquiry from the website. Olivia is looking to buy a three-bedroom apartment in Berlin. Loan request €520,000 on a €650,000 purchase. Assigned to Alex Carter. Stage: New · Call due in 1h 42m.",
@@ -492,7 +499,7 @@ export const DESIGN_SHOWCASE_ITEMS: DesignShowcaseItem[] = [
     id: "client-case-management",
     title: "Client & Case Management",
     subtitle: "Ava and Noah Martin · €680,000 · Potsdam",
-    imagePath: "/src/assets/images/leadflow_hero_neo_apple_1790785536994.jpg",
+    imagePath: leadflowHeroNeoApple,
     aspectRatio: "4:3",
     description:
       "Client case for a family home purchase in Potsdam. Loan €680,000. Both applicants have permanent employment. Advisor Maya Chen. Stage: Documents · 12 of 18 items complete.",
@@ -508,7 +515,7 @@ export const DESIGN_SHOWCASE_ITEMS: DesignShowcaseItem[] = [
     id: "document-verification",
     title: "Document Verification",
     subtitle: "Credit report · Payslips · Identity",
-    imagePath: "/src/assets/images/leadflow_doc_verification_1790785565858.jpg",
+    imagePath: leadflowDocVerification,
     aspectRatio: "4:3",
     description:
       "Document review for Ava and Noah Martin. Payslips approved. Credit report needs an updated copy. Identity check complete. Lender submission pack is 74% ready.",
@@ -524,7 +531,7 @@ export const DESIGN_SHOWCASE_ITEMS: DesignShowcaseItem[] = [
     id: "tasks-workflow",
     title: "Tasks & Workflow Automation",
     subtitle: "2h call SLA · Portal invite · Credit review",
-    imagePath: "/src/assets/images/leadflow_pipeline_glass_1790785552441.jpg",
+    imagePath: leadflowPipelineGlass,
     aspectRatio: "4:3",
     description:
       "Workflow triggers for Berlin Home Finance: call new leads within 2 hours, send the portal invite after first contact, and review credit and income documents before lender submission. Ethan Brooks’s invite task is overdue by 25 minutes.",
@@ -540,7 +547,7 @@ export const DESIGN_SHOWCASE_ITEMS: DesignShowcaseItem[] = [
     id: "analytics-activity",
     title: "Analytics & Activity",
     subtitle: "€14.25M volume · 28 active leads · Berlin",
-    imagePath: "/src/assets/images/leadflow_hero_neo_apple_1790785536994.jpg",
+    imagePath: leadflowHeroNeoApple,
     aspectRatio: "4:3",
     description:
       "Berlin Home Finance this month: €14.25M pipeline volume, 28 live leads, 4 advisors. Funnel snapshot — New 6, Contacted 5, Documents 8, In Review 4, Offer received 3, Won 2. Latest activity: lender review update for the Martin case.",
@@ -556,7 +563,7 @@ export const DESIGN_SHOWCASE_ITEMS: DesignShowcaseItem[] = [
     id: "client-portal",
     title: "Client Portal",
     subtitle: "Secure uploads · Case status · Advisor chat",
-    imagePath: "/src/assets/images/leadflow_client_portal_1790785579057.jpg",
+    imagePath: leadflowClientPortal,
     aspectRatio: "4:3",
     description:
       "Client view for Ava and Noah Martin: secure upload area for payslips, credit report and identity documents. Readiness is 74%. Advisor Maya Chen is available. Next step: upload an updated credit report.",
