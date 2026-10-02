@@ -374,3 +374,26 @@ Do not redesign the frontend.
 
 Test and fix errors.
 Commit changes.
+
+Implement the LeadFlow dashboard API.
+
+Return:
+- total leads
+- leads by pipeline stage
+- contacted leads
+- active clients
+- won leads
+- lost leads
+- overdue tasks
+- recent activity
+
+Use efficient MongoDB aggregation/indexes.
+
+Every result must be restricted to the logged-in brokerage.
+
+Connect dashboard changes to existing Socket.IO events where appropriate so displayed statistics can stay current.
+
+Do not redesign the frontend.
+
+Test and fix errors.
+Commit changes.

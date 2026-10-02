@@ -6,6 +6,7 @@ import { UserModel } from "../models/User.js";
 import { findDuplicateLeads } from "../services/leadDuplicateService.js";
 import { applyPipelineAutomation } from "../services/taskAutomationService.js";
 import { applyPipelineEmailAutomation } from "../services/pipelineEmailService.js";
+import { publishDashboardStats } from "../services/dashboardService.js";
 import { buildLeadListFilter, getLeadTenantId } from "../utils/leadQuery.js";
 import {
   normalizeEmail,
@@ -333,6 +334,8 @@ export const createLead: RequestHandler = async (request, response, next) => {
     }
 
     const lead = await LeadModel.create({ ...parsed.update, brokerageId });
+    // Refresh brokerage dashboards (total leads / stage distribution change).
+    void publishDashboardStats(brokerageId);
     response.status(201).json({ lead });
   } catch (error) {
     next(error);
@@ -502,6 +505,10 @@ async function updateLead(
       } catch (error) {
         console.error("Pipeline email automation failed:", error);
       }
+
+      // Refresh brokerage dashboards: stage distribution and the won/lost
+      // figures change on every stage transition.
+      void publishDashboardStats(brokerageId);
     }
 
     response.status(200).json({ lead });
@@ -607,6 +614,8 @@ export const deleteLead: RequestHandler = async (request, response, next) => {
       response.status(404).json({ error: "Lead not found." });
       return;
     }
+    // Refresh brokerage dashboards (total leads / stage distribution change).
+    void publishDashboardStats(brokerageId);
     response.status(204).end();
   } catch (error) {
     next(error);
