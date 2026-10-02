@@ -18,7 +18,7 @@ const activitySchema = new Schema(
     actorId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     type: {
       type: String,
-      enum: ["lead_stage_changed", "lead_converted"],
+      enum: ["lead_stage_changed", "lead_converted", "email_sent"],
       required: true,
     },
     fromStage: {
