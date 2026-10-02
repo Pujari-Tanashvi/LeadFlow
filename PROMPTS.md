@@ -328,3 +328,28 @@ Do not redesign the frontend.
 
 Run/typecheck/test and fix errors.
 Commit the changes if Git is configured.
+
+First append this exact prompt verbatim to PROMPTS.md.
+
+Implement brokerage email templates.
+
+Create EmailTemplate with:
+name, subject, body, stage, active, brokerageId.
+
+Support these placeholders:
+{{client_name}}
+{{advisor_name}}
+{{brokerage_name}}
+
+Create CRUD APIs.
+
+Only brokerage_admin can create, edit and delete templates.
+
+Validate supported placeholders before saving.
+
+Respect brokerage isolation.
+
+Do not redesign the frontend.
+
+Test and fix errors.
+Commit changes.https://github.com/Pujari-Tanashvi/LeadFlow
