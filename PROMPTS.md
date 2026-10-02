@@ -397,3 +397,43 @@ Do not redesign the frontend.
 
 Test and fix errors.
 Commit changes.
+Continue the existing LeadFlow frontend.
+
+First append this exact prompt verbatim to PROMPTS.md.
+
+Do not redesign the page. Keep the existing Neo-Apple minimalist style, typography, spacing, glassmorphism, gradients and animations.
+
+Update ONLY the workflow feature sections for:
+1. Lead Workflow
+2. Document Workflow
+
+Make every workflow box use the SAME visual card design:
+- translucent frosted glass background
+- backdrop blur
+- subtle border
+- soft shadow
+- rounded corners
+- consistent padding and typography
+
+On hover, each card should smoothly transform from blurred glass into a stronger solid gradient surface.
+
+Give the cards different hover movement directions:
+- card 1 → slides slightly LEFT
+- card 2 → slides slightly RIGHT
+- card 3 → slides slightly UP
+- card 4 → slides slightly DOWN
+
+Use smooth CSS transitions/transformations.
+The movement should be subtle and premium, not exaggerated.
+
+The gradient should appear progressively during hover rather than suddenly.
+
+Keep the cards identical in structure and size.
+Only the hover direction/gradient variation should differ.
+
+Make the same treatment consistent across Lead Workflow and Document Workflow.
+
+Do not change unrelated sections.
+
+Test the frontend and fix visual/runtime errors.
+Commit changes to https://github.com/Pujari-Tanashvi/LeadFlow also on dashboard all the imgs are gone bring those imgs back.

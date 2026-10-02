@@ -62,6 +62,152 @@
   .glass-specular:hover::before {
     left: 150%;
   }
+
+  /* ── Workflow cards ───────────────────────────────────────────────────────
+     Every workflow box (Lead Workflow + Document Workflow) shares this single
+     frosted-glass shell: translucent background, backdrop blur, subtle border,
+     soft shadow, rounded corners and consistent padding/typography.
+     On hover the glass resolves progressively into a solid gradient surface
+     while the card slides in its own subtle direction. Only the hover
+     direction and the gradient variation differ per card. */
+  .workflow-card {
+    --wf-shift-x: 0px;
+    --wf-shift-y: 0px;
+    --wf-gradient: linear-gradient(
+      135deg,
+      #f9a8d4 0%,
+      #fcd34d 55%,
+      #a5b4fc 100%
+    );
+    position: relative;
+    isolation: isolate;
+    background-color: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(24px) saturate(185%);
+    -webkit-backdrop-filter: blur(24px) saturate(185%);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 20px 40px -18px rgba(15, 23, 42, 0.06),
+                inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9);
+    transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 620ms cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 620ms ease,
+                backdrop-filter 620ms ease,
+                -webkit-backdrop-filter 620ms ease;
+    will-change: transform;
+  }
+
+  /* Gradient wash that is revealed progressively during hover */
+  .workflow-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: var(--wf-gradient);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .workflow-card:hover {
+    transform: translate3d(var(--wf-shift-x), var(--wf-shift-y), 0) scale(1.015);
+    border-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(6px) saturate(140%);
+    -webkit-backdrop-filter: blur(6px) saturate(140%);
+    box-shadow: 0 30px 60px -22px rgba(15, 23, 42, 0.18),
+                inset 0 1px 2px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  .workflow-card:hover::after {
+    opacity: 1;
+  }
+
+  /* Per-card hover direction: subtle left / right / up / down slide */
+  .workflow-card--left {
+    --wf-shift-x: -8px;
+  }
+
+  .workflow-card--right {
+    --wf-shift-x: 8px;
+  }
+
+  .workflow-card--up {
+    --wf-shift-y: -8px;
+  }
+
+  .workflow-card--down {
+    --wf-shift-y: 8px;
+  }
+
+  /* Per-card gradient variation (same order in both workflow sections) */
+  .workflow-card--gradient-1 {
+    --wf-gradient: linear-gradient(135deg, #f9a8d4 0%, #fcd34d 55%, #a5b4fc 100%);
+  }
+
+  .workflow-card--gradient-2 {
+    --wf-gradient: linear-gradient(135deg, #bfdbfe 0%, #a7f3d0 55%, #fde68a 100%);
+  }
+
+  .workflow-card--gradient-3 {
+    --wf-gradient: linear-gradient(135deg, #ddd6fe 0%, #fbcfe8 55%, #fecaca 100%);
+  }
+
+  .workflow-card--gradient-4 {
+    --wf-gradient: linear-gradient(135deg, #fcd34d 0%, #fdba74 55%, #f9a8d4 100%);
+  }
+
+  /* Inner stage swatch: identical frosted chip in every card, it dissolves
+     into the gradient as the card surface becomes solid. */
+  .workflow-swatch {
+    background-color: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(10px) saturate(160%);
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
+    box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.85);
+    transition: background-color 700ms cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 700ms ease,
+                box-shadow 700ms ease,
+                backdrop-filter 700ms ease,
+                -webkit-backdrop-filter 700ms ease;
+  }
+
+  .workflow-card:hover .workflow-swatch {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(2px) saturate(140%);
+    -webkit-backdrop-filter: blur(2px) saturate(140%);
+    box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.55);
+  }
+
+  /* Description copy settles as the gradient arrives */
+  .workflow-card-desc {
+    color: rgba(100, 116, 139, 1);
+    transition: color 620ms ease;
+  }
+
+  .workflow-card:hover .workflow-card-desc {
+    color: rgba(51, 65, 85, 0.92);
+  }
+
+  /* Selected card keeps the original ink ring */
+  .workflow-card--active {
+    border-color: rgba(15, 23, 42, 0.85);
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.85),
+                0 20px 40px -18px rgba(15, 23, 42, 0.12),
+                inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .workflow-card--active:hover {
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.85),
+                0 30px 60px -22px rgba(15, 23, 42, 0.22),
+                inset 0 1px 2px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .workflow-card,
+    .workflow-card::after,
+    .workflow-swatch,
+    .workflow-card-desc {
+      transition-duration: 1ms;
+    }
+  }
 }
 
 /* Custom subtle scrollbar */

@@ -38,9 +38,6 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
     null,
   );
   const [activeGraphicEffect, setActiveGraphicEffect] = useState<number>(1);
-  const [glassBlur, setGlassBlur] = useState<number>(24);
-  const [glassOpacity, setGlassOpacity] = useState<number>(75);
-  const [lightIntensity, setLightIntensity] = useState<number>(85);
 
   // 3D Card Tilt state for the hero preview
   const cardRef = useRef<HTMLDivElement>(null);
@@ -71,97 +68,115 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
     setRotateY(0);
   };
 
-  const GRAPHIC_EFFECTS = [
+  // Shared workflow-card treatment: every box in the Lead Workflow and the
+  // Document Workflow section uses the exact same glass card shell, size and
+  // typography. Only the hover direction and the gradient wash differ.
+  const WORKFLOW_HOVER_DIRECTIONS = [
+    "workflow-card--left",
+    "workflow-card--right",
+    "workflow-card--up",
+    "workflow-card--down",
+  ];
+
+  const WORKFLOW_GRADIENT_VARIANTS = [
+    "workflow-card--gradient-1",
+    "workflow-card--gradient-2",
+    "workflow-card--gradient-3",
+    "workflow-card--gradient-4",
+  ];
+
+  // 1. Lead Workflow stages
+  const LEAD_WORKFLOW_STAGES = [
     {
       id: 1,
       title: "01. New lead",
       desc: "Confirm contact details, source and requested loan amount.",
-      style: {
-        background: `rgba(255, 255, 255, ${glassOpacity / 100})`,
-        backdropFilter: `blur(${glassBlur}px) saturate(180%)`,
-        WebkitBackdropFilter: `blur(${glassBlur}px) saturate(180%)`,
-        border: "1px solid rgba(255, 255, 255, 0.85)",
-        boxShadow:
-          "0 20px 40px -15px rgba(0,0,0,0.06), inset 0 1px 2px 0 rgba(255,255,255,0.95)",
-      },
     },
     {
       id: 2,
       title: "02. Contacted",
       desc: "Advisor has reached the applicant and captured the next step.",
-      style: {
-        background: "#f1f5f9",
-        boxShadow: "8px 8px 20px #d1d5db, -8px -8px 20px #ffffff",
-        border: "none",
-      },
     },
     {
       id: 3,
       title: "03. Qualified",
       desc: "Income, deposit and property details are ready for review.",
-      style: {
-        background: "#ffffff",
-        boxShadow: "0 25px 50px -12px rgba(15, 23, 42, 0.15)",
-        border: "1px solid rgba(226, 232, 240, 0.8)",
-      },
     },
     {
       id: 4,
       title: "04. Documents",
       desc: "Collect identity, income and property documents from the client.",
-      style: {
-        background: "#ffffff",
-        border: "1px solid rgba(251, 146, 60, 0.4)",
-        boxShadow:
-          "0 0 35px 5px rgba(251, 146, 60, 0.35), 0 0 15px rgba(244, 63, 94, 0.2)",
-      },
     },
+  ];
+
+  // 2. Document Workflow stages
+  const DOCUMENT_WORKFLOW_STAGES = [
     {
       id: 5,
       title: "05. In Review",
       desc: "Check completeness and prepare the lender submission pack.",
-      style: {
-        background:
-          "linear-gradient(135deg, #fbcfe8 0%, #fed7aa 50%, #c7d2fe 100%)",
-        border: "1px solid rgba(255, 255, 255, 0.6)",
-        boxShadow: "0 12px 30px -8px rgba(244, 114, 182, 0.25)",
-      },
     },
     {
       id: 6,
       title: "06. Verified",
       desc: "Required files passed review and are ready for underwriting.",
-      style: {
-        background: "#ffffff",
-        border: "1.5px solid #38bdf8",
-        boxShadow: "0 0 25px 2px rgba(56, 189, 248, 0.45)",
-      },
     },
     {
       id: 7,
       title: "07. Follow-up",
       desc: "Request a replacement when a document is missing or out of date.",
-      style: {
-        background: "#f8fafc",
-        boxShadow:
-          "inset 4px 4px 8px rgba(0, 0, 0, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.9)",
-        border: "1px solid rgba(226, 232, 240, 0.6)",
-      },
     },
     {
       id: 8,
       title: "08. Complete",
       desc: "Record the outcome and keep the full case history together.",
-      style: {
-        background: "#ffffff",
-        borderTop: "2px solid rgba(255, 255, 255, 1)",
-        borderLeft: "2px solid rgba(255, 255, 255, 0.8)",
-        borderBottom: "2px solid rgba(148, 163, 184, 0.5)",
-        borderRight: "2px solid rgba(148, 163, 184, 0.3)",
-        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)",
-      },
     },
   ];
+
+  // Identical card markup for both workflow sections. Every box is the same
+  // frosted glass card; on hover it resolves into a solid gradient surface and
+  // slides subtly left / right / up / down depending on its position.
+  const renderWorkflowCards = (
+    stages: { id: number; title: string; desc: string }[],
+  ) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {stages.map((stage, index) => {
+        const isActive = activeGraphicEffect === stage.id;
+        return (
+          <div
+            key={stage.id}
+            onClick={() => {
+              soundManager.playClick();
+              setActiveGraphicEffect(stage.id);
+            }}
+            className={`workflow-card p-4 rounded-2xl cursor-pointer flex flex-col justify-between h-56 ${
+              WORKFLOW_HOVER_DIRECTIONS[index % WORKFLOW_HOVER_DIRECTIONS.length]
+            } ${
+              WORKFLOW_GRADIENT_VARIANTS[index % WORKFLOW_GRADIENT_VARIANTS.length]
+            } ${isActive ? "workflow-card--active" : ""}`}
+          >
+            {/* Stage swatch — the same frosted chip in every workflow box */}
+            <div className="workflow-swatch relative z-10 w-full h-24 rounded-xl flex items-center justify-center border border-white/70">
+              <span className="text-xs font-bold text-slate-800 drop-shadow-xs">
+                {stage.title.split(". ")[1]}
+              </span>
+            </div>
+
+            {/* Details */}
+            <div className="relative z-10 pt-3">
+              <h4 className="text-xs font-bold text-slate-900 flex items-center justify-between">
+                <span>{stage.title}</span>
+                {isActive && <Check className="w-3.5 h-3.5 text-slate-900" />}
+              </h4>
+              <p className="workflow-card-desc text-[11px] mt-1 leading-relaxed">
+                {stage.desc}
+              </p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div className="relative py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16">
@@ -362,16 +377,16 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
         </div>
       </section>
 
-      {/* Lead stages and review checkpoints */}
+      {/* 1. Lead Workflow */}
       <section className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/80 shadow-lg space-y-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 mb-1">
               <Layers className="w-4 h-4 text-indigo-500" />
-              <span>LEAD & DOCUMENT WORKFLOW</span>
+              <span>LEAD WORKFLOW</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
-              From new enquiry to verified documents
+              From new enquiry to qualified case
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
               Track each mortgage case through advisor follow-up, document
@@ -400,48 +415,48 @@ export const DesignShowcase: React.FC<DesignShowcaseProps> = ({
         </div>
 
         {/* Lead workflow stage grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {GRAPHIC_EFFECTS.map((eff) => {
-            const isActive = activeGraphicEffect === eff.id;
-            return (
-              <div
-                key={eff.id}
-                onClick={() => {
-                  soundManager.playClick();
-                  setActiveGraphicEffect(eff.id);
-                }}
-                className={`p-4 rounded-2xl transition-all cursor-pointer flex flex-col justify-between h-56 ${
-                  isActive
-                    ? "ring-2 ring-slate-900 shadow-md"
-                    : "bg-slate-50/50 hover:bg-slate-50"
-                }`}
-              >
-                {/* Visual Swatch Demo */}
-                <div
-                  className="w-full h-24 rounded-xl flex items-center justify-center transition-all"
-                  style={eff.style}
-                >
-                  <span className="text-xs font-bold text-slate-800 drop-shadow-xs">
-                    {eff.title.split(". ")[1]}
-                  </span>
-                </div>
+        {renderWorkflowCards(LEAD_WORKFLOW_STAGES)}
+      </section>
 
-                {/* Details */}
-                <div className="pt-3">
-                  <h4 className="text-xs font-bold text-slate-900 flex items-center justify-between">
-                    <span>{eff.title}</span>
-                    {isActive && (
-                      <Check className="w-3.5 h-3.5 text-slate-900" />
-                    )}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                    {eff.desc}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+      {/* 2. Document Workflow */}
+      <section className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/80 shadow-lg space-y-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 mb-1">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>DOCUMENT WORKFLOW</span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+              From uploaded file to lender-ready pack
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
+              Verify, chase and sign off each borrower document before the
+              lender submission pack is released.
+            </p>
+          </div>
+
+          {/* Interactive Live Tuners */}
+          <div className="flex flex-wrap items-center gap-4 bg-slate-100/80 p-3 rounded-xl border border-slate-200 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600 font-medium">Awaiting upload</span>
+              <span className="font-mono text-[11px] text-slate-700">
+                6 documents
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600 font-medium">
+                Ready for lender review
+              </span>
+              <span className="font-mono text-[11px] text-slate-700">
+                8 files verified
+              </span>
+            </div>
+          </div>
         </div>
+
+        {/* Document workflow stage grid */}
+        {renderWorkflowCards(DOCUMENT_WORKFLOW_STAGES)}
       </section>
 
       {/* Mortgage operations overview */}
