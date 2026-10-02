@@ -353,3 +353,24 @@ Do not redesign the frontend.
 
 Test and fix errors.
 Commit changes.https://github.com/Pujari-Tanashvi/LeadFlow
+
+First append this exact prompt verbatim to PROMPTS.md.
+
+Implement pipeline email automation.
+
+When a lead enters a pipeline stage:
+1. Find the active email template for that brokerage/stage.
+2. Render the placeholders.
+3. Queue/send the email through an email service abstraction.
+4. Record an Activity.
+
+Email failure must NOT cause the lead stage update to fail.
+
+Prevent duplicate emails when the same stage event is processed more than once.
+
+Keep email credentials in environment variables.
+
+Do not redesign the frontend.
+
+Test and fix errors.
+Commit changes.
