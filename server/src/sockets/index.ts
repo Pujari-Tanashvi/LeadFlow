@@ -21,6 +21,16 @@ export function emitDocumentStatus(
   socketServer?.to(`client:${clientId}`).emit("document.status", document);
 }
 
+export type TaskEvent = "created" | "updated" | "deleted" | "overdue";
+
+export function emitTaskEvent(
+  brokerageId: string,
+  event: TaskEvent,
+  task: unknown,
+): void {
+  socketServer?.to(`brokerage:${brokerageId}`).emit(`task.${event}`, task);
+}
+
 export function attachSockets(
   httpServer: HttpServer,
   frontendOrigin: string,

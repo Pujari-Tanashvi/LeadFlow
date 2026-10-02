@@ -300,3 +300,31 @@ Do not redesign the UI.
 
 Test and fix errors.
 Commit changes.
+
+First append this exact prompt verbatim to PROMPTS.md.
+
+Implement Tasks and pipeline task automation.
+
+Task fields:
+title, leadId, clientId, assignedAdvisor, dueDate, status, priority, createdBy, brokerageId.
+
+Create APIs to:
+- create task
+- list/filter tasks
+- update task
+- complete task
+- delete task
+
+Automatically identify overdue tasks.
+
+Implement pipeline automation:
+when a lead enters a configured pipeline stage, create the required task, assign the advisor and calculate the due date.
+
+Prevent duplicate tasks when the same stage event is received more than once.
+
+Respect brokerage isolation and existing authentication/roles.
+
+Do not redesign the frontend.
+
+Run/typecheck/test and fix errors.
+Commit the changes if Git is configured.

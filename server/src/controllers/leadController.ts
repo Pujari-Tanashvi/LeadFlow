@@ -4,6 +4,7 @@ import { ActivityModel } from "../models/Activity.js";
 import { LEAD_STAGES, LeadModel, type LeadStage } from "../models/Lead.js";
 import { UserModel } from "../models/User.js";
 import { findDuplicateLeads } from "../services/leadDuplicateService.js";
+import { applyPipelineAutomation } from "../services/taskAutomationService.js";
 import { buildLeadListFilter, getLeadTenantId } from "../utils/leadQuery.js";
 import {
   normalizeEmail,
@@ -467,6 +468,21 @@ async function updateLead(
           { $set: { stage: fromStage } },
         ).exec();
         throw error;
+      }
+
+      // Pipeline automation is best-effort: a failure here must never roll back
+      // or fail the stage change the user already performed.
+      try {
+        await applyPipelineAutomation({
+          leadId,
+          brokerageId,
+          stage: requestedStage,
+          actorId: new Types.ObjectId(request.auth!.userId),
+          assignedAdvisor: lead.assignedAdvisor ?? null,
+          clientId: lead.convertedClientId ?? null,
+        });
+      } catch (error) {
+        console.error("Pipeline task automation failed:", error);
       }
     }
 

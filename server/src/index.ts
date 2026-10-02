@@ -6,6 +6,7 @@ import { assertJwtConfiguration } from "./services/authService.js";
 import { backfillLeadIdentityFields } from "./services/leadIdentityService.js";
 import { attachSockets } from "./sockets/index.js";
 import { startDocumentVerificationWorker } from "./services/documentVerificationWorker.js";
+import { startOverdueTaskWorker } from "./services/overdueTaskWorker.js";
 
 const httpServer = createServer(app);
 
@@ -24,6 +25,7 @@ async function startServer(): Promise<void> {
   }
   attachSockets(httpServer, env.frontendOrigin);
   startDocumentVerificationWorker();
+  startOverdueTaskWorker();
   httpServer.listen(env.port, () => {
     console.info(`LeadFlow API listening on http://localhost:${env.port}`);
   });
