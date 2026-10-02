@@ -48,6 +48,12 @@ const STAGES: {
     color: "border-indigo-400",
   },
   {
+    id: "qualified",
+    label: "Qualified",
+    description: "Budget & property confirmed",
+    color: "border-sky-400",
+  },
+  {
     id: "doc_gathering",
     label: "Doc Gathering",
     description: "Client uploading 15-40 docs",
@@ -58,12 +64,6 @@ const STAGES: {
     label: "Bank Underwriting",
     description: "Sparkasse / ING submission",
     color: "border-purple-400",
-  },
-  {
-    id: "offer_received",
-    label: "Offer Received",
-    description: "Binding contract ready",
-    color: "border-teal-400",
   },
   {
     id: "won",
@@ -127,6 +127,9 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
         emailTitle = "Borrowing capacity summary dispatched";
         taskTitle =
           "Task created: Send tailored borrowing capacity calculation";
+      } else if (newStage === "qualified") {
+        emailTitle = "Document checklist requested from the borrower";
+        taskTitle = "Task created: Send document request to borrower";
       } else if (newStage === "doc_gathering") {
         emailTitle = "Document checklist & bank portal login sent";
         taskTitle = "Task created: Review credit report and latest payslips";

@@ -3,6 +3,7 @@ export type UserRole = 'advisor' | 'brokerage_admin' | 'platform_admin' | 'clien
 export type PipelineStage = 
   | 'new'
   | 'contacted'
+  | 'qualified'
   | 'doc_gathering'
   | 'bank_underwriting'
   | 'offer_received'
@@ -41,13 +42,17 @@ export interface Lead {
   targetCity: string;
   loanAmountEur: number;
   propertyPriceEur: number;
-  employmentStatus: 'Employed (Permanent)' | 'Self-Employed' | 'Blue Card Holder' | 'Civil Servant';
-  source: 'Typeform Web Form' | 'Meta Expat Ads' | 'Partner Expatica' | 'Direct Calendly';
+  employmentStatus: string;
+  /** Required by the API when a lead is created. */
+  propertyType?: string;
+  source: string;
   stage: PipelineStage;
   assignedAdvisorId: string;
   createdAt: string;
   updatedAt: string;
   isClient: boolean;
+  /** Set once the lead has been converted into a client dossier. */
+  clientId?: string | null;
   duplicateInfo?: {
     isDuplicate: boolean;
     previousLeadId: string;
@@ -114,4 +119,64 @@ export interface DesignShowcaseItem {
   description: string;
   designNotes: string[];
   visualEffects: string[];
+}
+
+/** One entry of the brokerage activity feed returned by the dashboard API. */
+export type WorkspaceTab =
+  | 'showcase'
+  | 'pipeline'
+  | 'documents'
+  | 'analytics'
+  | 'automations'
+  | 'client_portal';
+
+/** Every workspace destination in the primary navigation. */
+export const WORKSPACE_TABS: readonly WorkspaceTab[] = [
+  'showcase',
+  'pipeline',
+  'documents',
+  'analytics',
+  'automations',
+  'client_portal',
+];
+
+/**
+ * Tabs a role may open. A client only ever reaches its own portal; brokerage
+ * staff get the full workspace.
+ */
+export function tabsForRole(role: UserRole): WorkspaceTab[] {
+  switch (role) {
+    case 'client':
+      return ['client_portal'];
+    case 'advisor':
+    case 'brokerage_admin':
+      return [...WORKSPACE_TABS];
+    case 'platform_admin':
+      return ['showcase'];
+    default:
+      return ['showcase'];
+  }
+}
+
+export interface ActivityEntry {
+  id: string;
+  type: string;
+  leadId: string;
+  actorId: string;
+  fromStage: string | null;
+  toStage: string | null;
+  clientId: string | null;
+  createdAt: string | null;
+}
+
+/** Brokerage-scoped statistics served by GET /api/dashboard. */
+export interface DashboardStats {
+  totalLeads: number;
+  leadsByStage: Record<PipelineStage, number>;
+  contactedLeads: number;
+  activeClients: number;
+  wonLeads: number;
+  lostLeads: number;
+  overdueTasks: number;
+  recentActivity: ActivityEntry[];
 }

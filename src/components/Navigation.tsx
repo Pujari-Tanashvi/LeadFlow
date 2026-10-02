@@ -1,5 +1,5 @@
 import React from 'react';
-import { Brokerage, UserRole } from '../types';
+import { Brokerage, UserRole, WorkspaceTab } from '../types';
 import { soundManager } from '../utils/audio';
 import { 
   Sparkles, 
@@ -12,23 +12,38 @@ import {
   UserCircle,
   Building2,
   Plus,
-  Download
+  Download,
+  LogOut
 } from 'lucide-react';
 
 interface NavigationProps {
   currentTab: 'showcase' | 'pipeline' | 'documents' | 'analytics' | 'automations' | 'client_portal';
   setCurrentTab: (tab: 'showcase' | 'pipeline' | 'documents' | 'analytics' | 'automations' | 'client_portal') => void;
   activeRole: UserRole;
-  setActiveRole: (role: UserRole) => void;
+  setActiveRole?: (role: UserRole) => void;
   activeBrokerage: Brokerage;
-  setActiveBrokerage: (b: Brokerage) => void;
+  setActiveBrokerage?: (b: Brokerage) => void;
   brokerages: Brokerage[];
   onOpenIngestModal: () => void;
   soundEnabled: boolean;
   setSoundEnabled: (val: boolean) => void;
   liveSyncActive: boolean;
   setLiveSyncActive: (val: boolean) => void;
+  /** Tabs the signed-in role is allowed to open. */
+  availableTabs?: WorkspaceTab[];
+  /** Signed-in identity, shown next to the role badge. */
+  accountLabel?: string;
+  onSignOut?: () => void;
 }
+
+const ALL_TABS: WorkspaceTab[] = [
+  'showcase',
+  'pipeline',
+  'documents',
+  'analytics',
+  'automations',
+  'client_portal',
+];
 
 export const Navigation: React.FC<NavigationProps> = ({
   currentTab,
@@ -42,24 +57,21 @@ export const Navigation: React.FC<NavigationProps> = ({
   soundEnabled,
   setSoundEnabled,
   liveSyncActive,
-  setLiveSyncActive
+  setLiveSyncActive,
+  availableTabs,
+  accountLabel,
+  onSignOut,
 }) => {
+  const visibleTabs = availableTabs ?? ALL_TABS;
+  const isVisible = (tab: WorkspaceTab) => visibleTabs.includes(tab);
+
   const handleTabChange = (tab: typeof currentTab) => {
     soundManager.playClick();
     setCurrentTab(tab);
   };
 
-  const handleRoleChange = (role: UserRole) => {
-    soundManager.playClick();
-    setActiveRole(role);
-    if (role === 'client') {
-      setCurrentTab('client_portal');
-    } else if (currentTab === 'client_portal') {
-      setCurrentTab('pipeline');
-    }
-  };
-
   const handleBrokerageChange = (brokerageId: string) => {
+    if (!setActiveBrokerage) return;
     const found = brokerages.find(b => b.id === brokerageId);
     if (found) {
       soundManager.playClick();
@@ -88,6 +100,7 @@ export const Navigation: React.FC<NavigationProps> = ({
 
         {/* Zone 2: Navigation Links (Single-line, 4-6 links) */}
         <nav className="hidden lg:flex items-center gap-1.5 p-1 bg-slate-200/50 backdrop-blur-md rounded-xl border border-white/60">
+          {isVisible('showcase') && (
           <button
             onClick={() => handleTabChange('showcase')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
@@ -99,7 +112,9 @@ export const Navigation: React.FC<NavigationProps> = ({
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             <span>Dashboard</span>
           </button>
+          )}
 
+          {isVisible('pipeline') && (
           <button
             onClick={() => handleTabChange('pipeline')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
@@ -111,7 +126,9 @@ export const Navigation: React.FC<NavigationProps> = ({
             <Kanban className="w-3.5 h-3.5 text-blue-500" />
             <span>Leads & Pipeline</span>
           </button>
+          )}
 
+          {isVisible('documents') && (
           <button
             onClick={() => handleTabChange('documents')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
@@ -123,7 +140,9 @@ export const Navigation: React.FC<NavigationProps> = ({
             <FileCheck2 className="w-3.5 h-3.5 text-emerald-500" />
             <span>Documents</span>
           </button>
+          )}
 
+          {isVisible('analytics') && (
           <button
             onClick={() => handleTabChange('analytics')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
@@ -135,7 +154,9 @@ export const Navigation: React.FC<NavigationProps> = ({
             <BarChart3 className="w-3.5 h-3.5 text-indigo-500" />
             <span>Analytics</span>
           </button>
+          )}
 
+          {isVisible('automations') && (
           <button
             onClick={() => handleTabChange('automations')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
@@ -147,7 +168,9 @@ export const Navigation: React.FC<NavigationProps> = ({
             <Cpu className="w-3.5 h-3.5 text-purple-500" />
             <span>Automations</span>
           </button>
+          )}
 
+          {isVisible('client_portal') && (
           <button
             onClick={() => handleTabChange('client_portal')}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
@@ -159,6 +182,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             <UserCircle className="w-3.5 h-3.5 text-rose-500" />
             <span>Client Portal</span>
           </button>
+          )}
         </nav>
 
         {/* Zone 3: Actions (Multi-Tenant Selector, Role Switcher, Lead Simulator, Sound) */}
@@ -181,14 +205,15 @@ export const Navigation: React.FC<NavigationProps> = ({
             </select>
           </div>
 
-          {/* Role Switcher (Requirement: 4 user kinds: platform admin, brokerage admin, advisor, client) */}
+          {/* Role: resolved from the signed-in account, never chosen in the UI */}
           <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 border border-slate-200/80 text-xs">
             <span className="text-[11px] font-medium text-slate-600 hidden sm:inline">Role:</span>
             <select
               aria-label="User Role"
               value={activeRole}
-              onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-              className="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer text-xs"
+              disabled
+              title="Your role comes from your LeadFlow account"
+              className="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-not-allowed text-xs disabled:opacity-100 disabled:cursor-not-allowed"
             >
               <option value="advisor">Advisor</option>
               <option value="brokerage_admin">Brokerage Admin</option>
@@ -196,6 +221,30 @@ export const Navigation: React.FC<NavigationProps> = ({
               <option value="client">Expat Client</option>
             </select>
           </div>
+
+          {/* Signed-in identity + sign out */}
+          {accountLabel && (
+            <span
+              className="hidden xl:inline text-[11px] font-medium text-slate-500 truncate max-w-[160px]"
+              title={accountLabel}
+            >
+              {accountLabel}
+            </span>
+          )}
+
+          {onSignOut && (
+            <button
+              onClick={() => {
+                soundManager.playClick();
+                onSignOut();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-xs transition-colors whitespace-nowrap cursor-pointer"
+              title="Sign out of LeadFlow"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sign out</span>
+            </button>
+          )}
 
           {/* Download Source Code ZIP */}
           <a

@@ -437,3 +437,45 @@ Do not change unrelated sections.
 
 Test the frontend and fix visual/runtime errors.
 Commit changes to https://github.com/Pujari-Tanashvi/LeadFlow also on dashboard all the imgs are gone bring those imgs back.
+Continue the existing LeadFlow project.
+
+First append this exact prompt verbatim to PROMPTS.md.
+
+Connect the approved frontend to the existing backend.
+
+Do NOT redesign or replace the existing UI.
+
+Replace mock/demo data with real APIs for:
+- authentication
+- dashboard
+- leads
+- pipeline
+- lead details
+- clients
+- documents
+- tasks
+- email templates
+- automations
+
+Add a clean frontend API/service layer.
+
+Use the existing JWT authentication.
+
+Connect Socket.IO for:
+- live lead/pipeline updates
+- document verification status
+- relevant dashboard updates
+- notifications/activity where already supported
+
+Add proper loading, error and empty states without changing the visual design.
+
+Respect all four roles:
+platform_admin
+brokerage_admin
+advisor
+client
+
+Respect brokerage isolation.
+
+Test the major user flows and fix errors.
+Commit changes.

@@ -20,12 +20,26 @@ const editableFields = [
   "phone",
   "source",
   "propertyType",
+  "nationality",
+  "targetCity",
+  "employmentStatus",
+  "propertyPriceEur",
   "loanAmount",
   "assignedAdvisor",
   "stage",
 ] as const;
 
 type EditableField = (typeof editableFields)[number];
+
+/**
+ * Optional descriptive fields. Unlike the core fields these accept an empty
+ * value so a caller can clear them again without a separate unset endpoint.
+ */
+const optionalTextFields = [
+  "nationality",
+  "targetCity",
+  "employmentStatus",
+] as const;
 type LeadUpdate = Partial<Record<EditableField, unknown>> &
   Partial<
     Record<"emailNormalized" | "phoneNormalized" | "nameNormalized", string>
@@ -79,6 +93,31 @@ function parseLeadInput(
       } else {
         return { error: "assignedAdvisor must be a valid user ID or null." };
       }
+      continue;
+    }
+
+    if (field === "propertyPriceEur") {
+      if (fieldValue === null || fieldValue === "") {
+        update[field] = null;
+        continue;
+      }
+      if (
+        typeof fieldValue !== "number" ||
+        !Number.isFinite(fieldValue) ||
+        fieldValue < 0
+      ) {
+        return { error: "propertyPriceEur must be a non-negative number." };
+      }
+      update[field] = fieldValue;
+      continue;
+    }
+
+    // Optional descriptive fields accept an empty value so they can be cleared.
+    if (
+      (optionalTextFields as readonly string[]).includes(field) &&
+      (fieldValue === null || fieldValue === "")
+    ) {
+      update[field] = "";
       continue;
     }
 

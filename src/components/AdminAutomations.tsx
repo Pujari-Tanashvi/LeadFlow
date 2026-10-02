@@ -36,12 +36,31 @@ interface AdminAutomationsProps {
 const STAGE_LABELS: Record<PipelineStage, string> = {
   new: "New Inbound",
   contacted: "Contacted",
+  qualified: "Qualified",
   doc_gathering: "Doc Gathering",
   bank_underwriting: "Bank Underwriting",
   offer_received: "Offer Received",
   won: "Won / Signed",
   lost: "Lost / Disqualified",
 };
+
+/**
+ * Placeholder used before the brokerage has any template, so the editor still
+ * renders instead of dereferencing an empty list.
+ */
+const emptyTemplate = (brokerageId: string): EmailTemplate => ({
+  id: "",
+  brokerageId,
+  name: "",
+  triggerStage: "new",
+  subject: "",
+  body: "",
+  availablePlaceholders: [
+    "{{client_name}}",
+    "{{advisor_name}}",
+    "{{brokerage_name}}",
+  ],
+});
 
 export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
   emailTemplates,
@@ -57,7 +76,7 @@ export const AdminAutomations: React.FC<AdminAutomationsProps> = ({
     "emails",
   );
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate>(
-    emailTemplates[0],
+    () => emailTemplates[0] ?? emptyTemplate(activeBrokerage.id),
   );
   const [isEditingTemplate, setIsEditingTemplate] = useState(false);
   const [editedSubject, setEditedSubject] = useState(selectedTemplate.subject);

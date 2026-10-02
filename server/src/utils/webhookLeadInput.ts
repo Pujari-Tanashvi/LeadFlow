@@ -10,6 +10,10 @@ const acceptedFields = [
   "phone",
   "source",
   "propertyType",
+  "nationality",
+  "targetCity",
+  "employmentStatus",
+  "propertyPriceEur",
   "loanAmount",
 ] as const;
 
@@ -19,6 +23,10 @@ export interface ExternalLeadInput {
   phone: string;
   source: string;
   propertyType: string;
+  nationality: string;
+  targetCity: string;
+  employmentStatus: string;
+  propertyPriceEur: number | null;
   loanAmount: number;
   nameNormalized: string;
   emailNormalized: string;
@@ -83,6 +91,44 @@ export function parseExternalLeadInput(
   if (propertyType.length > 100) {
     return { error: "propertyType exceeds 100 characters." };
   }
+
+  // Optional presentation fields: accepted when present, ignored when absent.
+  const optionalText = (field: string): string | null => {
+    const candidate = value[field];
+    if (candidate === undefined || candidate === null) return null;
+    if (typeof candidate !== "string") {
+      throw new Error(`${field} must be a string when provided.`);
+    }
+    const trimmed = candidate.trim();
+    if (trimmed.length > 100) {
+      throw new Error(`${field} exceeds 100 characters.`);
+    }
+    return trimmed;
+  };
+
+  let nationality = "";
+  let targetCity = "";
+  let employmentStatus = "";
+  let propertyPriceEur: number | null = null;
+  try {
+    nationality = optionalText("nationality") ?? "";
+    targetCity = optionalText("targetCity") ?? "";
+    employmentStatus = optionalText("employmentStatus") ?? "";
+  } catch (error) {
+    return { error: (error as Error).message };
+  }
+
+  const rawPropertyPrice = value.propertyPriceEur;
+  if (rawPropertyPrice !== undefined && rawPropertyPrice !== null) {
+    if (
+      typeof rawPropertyPrice !== "number" ||
+      !Number.isFinite(rawPropertyPrice) ||
+      rawPropertyPrice < 0
+    ) {
+      return { error: "propertyPriceEur must be a non-negative number." };
+    }
+    propertyPriceEur = rawPropertyPrice;
+  }
   if (
     typeof loanAmount !== "number" ||
     !Number.isFinite(loanAmount) ||
@@ -98,6 +144,10 @@ export function parseExternalLeadInput(
       phone,
       source,
       propertyType,
+      nationality,
+      targetCity,
+      employmentStatus,
+      propertyPriceEur,
       loanAmount,
       nameNormalized: normalizeLeadName(name),
       emailNormalized: email,

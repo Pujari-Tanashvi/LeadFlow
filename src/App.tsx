@@ -1,23 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useAuth } from "./context/AuthContext";
+import { WorkspaceProvider, useWorkspace } from "./context/WorkspaceContext";
 import {
-  BROKERAGES,
-  ADVISORS,
-  INITIAL_LEADS,
-  INITIAL_DOCUMENTS,
-  EMAIL_TEMPLATES,
-  STAGE_TASK_TRIGGERS,
-  INITIAL_TASKS,
-} from "./data/mockData";
-import {
-  Brokerage,
-  Advisor,
   Lead,
   DocumentItem,
   EmailTemplate,
   TaskTrigger,
-  LeadTask,
-  UserRole,
-  PipelineStage,
+  tabsForRole,
+  type UserRole,
+  type WorkspaceTab,
 } from "./types";
 import { soundManager } from "./utils/audio";
 import { Navigation } from "./components/Navigation";
@@ -29,236 +20,227 @@ import { AdminAutomations } from "./components/AdminAutomations";
 import { ClientPortal } from "./components/ClientPortal";
 import { LeadIngestionModal } from "./components/LeadIngestionModal";
 import { LeadDetailsModal } from "./components/LeadDetailsModal";
+import { LoginScreen } from "./components/LoginScreen";
+import {
+  EmptyPanel,
+  ErrorPanel,
+  InlineBanner,
+  LoadingPanel,
+  SplashScreen,
+} from "./components/StatusStates";
 
+/**
+ * The approved workspace, now bound to the real LeadFlow API.
+ *
+ * Only the data source changed: the layout, components, typography and motion
+ * are exactly the approved UI. Session, tenancy, permissions and every figure
+ * come from the API through the service layer, and live updates arrive over the
+ * authenticated Socket.IO channel.
+ */
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<
-    | "showcase"
-    | "pipeline"
-    | "documents"
-    | "analytics"
-    | "automations"
-    | "client_portal"
-  >("showcase");
-  const [activeRole, setActiveRole] = useState<UserRole>("advisor");
-  const [brokerages, setBrokerages] = useState<Brokerage[]>(BROKERAGES);
-  const [activeBrokerage, setActiveBrokerage] = useState<Brokerage>(
-    BROKERAGES[0],
+  const auth = useAuth();
+
+  if (auth.status === "initialising") {
+    return <SplashScreen />;
+  }
+
+  if (auth.status === "anonymous") {
+    return (
+      <LoginScreen
+        onSignIn={auth.signIn}
+        onSignUp={auth.signUp}
+        isSubmitting={auth.isSubmitting}
+        error={auth.error}
+        onDismissError={auth.clearError}
+      />
+    );
+  }
+
+  return (
+    <WorkspaceProvider>
+      <Workspace />
+    </WorkspaceProvider>
   );
+}
 
-  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
-  const [documents, setDocuments] = useState<DocumentItem[]>(INITIAL_DOCUMENTS);
-  const [emailTemplates, setEmailTemplates] =
-    useState<EmailTemplate[]>(EMAIL_TEMPLATES);
-  const [taskTriggers, setTaskTriggers] =
-    useState<TaskTrigger[]>(STAGE_TASK_TRIGGERS);
-  const [tasks, setTasks] = useState<LeadTask[]>(INITIAL_TASKS);
+const SHELL_PADDING = "py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4";
 
+/** A tiny, valid PDF so the intake simulators upload a real file to the API. */
+function sampleDocumentFile(name: string): File {
+  const body = [
+    "%PDF-1.4",
+    "1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj",
+    "2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj",
+    "3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 300 300]>>endobj",
+    "trailer<</Root 1 0 R>>",
+    "%%EOF",
+  ].join("\n");
+  return new File([body], `${name.replace(/\s+/g, "_")}.pdf`, {
+    type: "application/pdf",
+  });
+}
+
+function Workspace() {
+  const { user, permissions, signOut } = useAuth();
+  const {
+    leads,
+    documents,
+    tasks,
+    emailTemplates,
+    brokerage,
+    advisors,
+    clients,
+    taskTriggers,
+    isLoading,
+    error,
+    actionError,
+    lastEvent,
+    socketStatus,
+    liveSyncEnabled,
+    setLiveSyncEnabled,
+    isEmpty,
+    refresh,
+    clearActionError,
+    reportActionError,
+    moveLead,
+    ingestLead,
+    convertLead,
+    completeTask,
+    addTask,
+    saveTemplate,
+    addTemplate,
+    updateDocument,
+    addDocument,
+  } = useWorkspace();
+
+  const role = (user?.role ?? "advisor") as UserRole;
+  const allowedTabs = useMemo(() => tabsForRole(role), [role]);
+
+  const [currentTab, setCurrentTab] = useState<WorkspaceTab>(
+    () => tabsForRole(role)[0],
+  );
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [liveSyncActive, setLiveSyncActive] = useState(true);
-  const [lastSimulatedEvent, setLastSimulatedEvent] = useState<string | null>(
-    "Connected to Live WebSocket Stream (wss://api.leadflow.de/brokerage-berlin)",
-  );
-
   const [isIngestModalOpen, setIsIngestModalOpen] = useState(false);
   const [selectedLeadForDossier, setSelectedLeadForDossier] =
     useState<Lead | null>(null);
 
-  // Requirement 3: Live sync on every screen when anything changes (simulated WebSocket stream)
+  // The role comes from the account, so the visible tab must follow it.
   useEffect(() => {
-    if (!liveSyncActive) {
-      setLastSimulatedEvent(null);
-      return;
+    if (!allowedTabs.includes(currentTab)) {
+      setCurrentTab(allowedTabs[0]);
     }
+  }, [allowedTabs, currentTab]);
 
-    const syncMessages = [
-      "WebSocket: Advisor Maya Chen updated the case for Ava Martin",
-      "WebSocket: Commerzbank digital underwriting ping returned positive rating",
-      "WebSocket: New inbound lead received from the website",
-      "WebSocket: ING Deutschland updated 10-year fixed rate benchmark to 3.38%",
-      "WebSocket: Background OCR engine finished indexing salary statements",
-    ];
+  const applySoundPreference = (next: boolean) => {
+    setSoundEnabled(next);
+    soundManager.setSoundEnabled(next);
+    if (next) soundManager.playClick();
+  };
 
-    const interval = setInterval(() => {
-      const msg = syncMessages[Math.floor(Math.random() * syncMessages.length)];
-      setLastSimulatedEvent(msg);
-    }, 12000);
+  const handleMoveLead = async (leadId: string, stage: Lead["stage"]) => {
+    await moveLead(leadId, stage);
+  };
 
-    return () => clearInterval(interval);
-  }, [liveSyncActive]);
+  const handleConvertToClient = async (leadId: string) => {
+    await convertLead(leadId);
+  };
 
-  // Lead movement across stages
-  const handleMoveLead = (leadId: string, newStage: PipelineStage) => {
-    setLeads((prev) =>
-      prev.map((l) => {
-        if (l.id === leadId) {
-          return {
-            ...l,
-            stage: newStage,
-            updatedAt: "Just now",
-          };
-        }
-        return l;
-      }),
+  const handleIngestLead = async (lead: Lead) => {
+    await ingestLead(
+      {
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        source: lead.source,
+        propertyType: lead.propertyType ?? "Apartment",
+        nationality: lead.nationality === "—" ? "" : lead.nationality,
+        targetCity: lead.targetCity === "—" ? "" : lead.targetCity,
+        employmentStatus:
+          lead.employmentStatus === "—" ? "" : lead.employmentStatus,
+        propertyPriceEur: lead.propertyPriceEur || null,
+        loanAmount: lead.loanAmountEur,
+        assignedAdvisor: lead.assignedAdvisorId || null,
+      },
+      { createAnyway: Boolean(lead.duplicateInfo?.isDuplicate) },
     );
-
-    // Find trigger tasks for this stage
-    const matchingTrigger = taskTriggers.find(
-      (t) => t.brokerageId === activeBrokerage.id && t.stage === newStage,
-    );
-    const movedLead = leads.find((l) => l.id === leadId);
-    if (matchingTrigger && movedLead) {
-      const newTask: LeadTask = {
-        id: `task-${Date.now()}`,
-        leadId: movedLead.id,
-        leadName: movedLead.name,
-        brokerageId: activeBrokerage.id,
-        title: matchingTrigger.title,
-        stage: newStage,
-        assignedToAdvisor: "Alex Carter",
-        dueAt: `In ${matchingTrigger.slaHours} hours`,
-        isOverdue: false,
-        isCompleted: false,
-      };
-      setTasks((prev) => [newTask, ...prev]);
-    }
-  };
-
-  // Convert lead to client (Requirement 5)
-  const handleConvertToClient = (leadId: string) => {
-    setLeads((prev) =>
-      prev.map((l) => {
-        if (l.id === leadId) {
-          return {
-            ...l,
-            isClient: true,
-            stage: l.stage === "new" ? "doc_gathering" : l.stage,
-            updatedAt: "Just now",
-          };
-        }
-        return l;
-      }),
-    );
-
-    const convertedLead = leads.find((l) => l.id === leadId);
-    if (convertedLead) {
-      // Seed required document items for the new client
-      const newClientDocs: DocumentItem[] = [
-        {
-          id: `doc-${Date.now()}-1`,
-          leadId: convertedLead.id,
-          brokerageId: activeBrokerage.id,
-          name: "Last 3 Payslips",
-          category: "Income Proof",
-          status: "not_uploaded",
-          progress: 0,
-          required: true,
-        },
-        {
-          id: `doc-${Date.now()}-2`,
-          leadId: convertedLead.id,
-          brokerageId: activeBrokerage.id,
-          name: "Credit Report",
-          category: "Credit Rating",
-          status: "not_uploaded",
-          progress: 0,
-          required: true,
-        },
-        {
-          id: `doc-${Date.now()}-3`,
-          leadId: convertedLead.id,
-          brokerageId: activeBrokerage.id,
-          name: "Residence Permit or Passport",
-          category: "Identification",
-          status: "not_uploaded",
-          progress: 0,
-          required: true,
-        },
-      ];
-      setDocuments((prev) => [...prev, ...newClientDocs]);
-    }
-  };
-
-  // Document management
-  const handleUpdateDocument = (updatedDoc: DocumentItem) => {
-    setDocuments((prev) =>
-      prev.map((d) => (d.id === updatedDoc.id ? updatedDoc : d)),
-    );
-  };
-
-  const handleAddDocument = (newDoc: DocumentItem) => {
-    setDocuments((prev) => [newDoc, ...prev]);
-  };
-
-  // Client Portal upload
-  const handleClientUpload = (
-    docName: string,
-    category: DocumentItem["category"],
-  ) => {
-    const currentClient =
-      leads.find((l) => l.isClient && l.brokerageId === activeBrokerage.id) ||
-      leads[0];
-    const newDoc: DocumentItem = {
-      id: `doc-client-${Date.now()}`,
-      leadId: currentClient.id,
-      brokerageId: activeBrokerage.id,
-      name: docName,
-      category,
-      fileName: `${docName.replace(/\s+/g, "_")}_Upload.pdf`,
-      fileSize: "4.2 MB",
-      uploadedAt: "Just now",
-      status: "analyzing",
-      progress: 25,
-      required: true,
-    };
-    setDocuments((prev) => [newDoc, ...prev]);
-  };
-
-  // Ingest lead from webhook simulator
-  const handleIngestLead = (newLead: Lead) => {
-    setLeads((prev) => [newLead, ...prev]);
-    // Create new inbound task
-    const newTask: LeadTask = {
-      id: `task-ingested-${Date.now()}`,
-      leadId: newLead.id,
-      leadName: newLead.name,
-      brokerageId: activeBrokerage.id,
-      title: "Call lead within 2 hours & verify expat residency status",
-      stage: "new",
-      assignedToAdvisor: "Alex Carter",
-      dueAt: "In 2 hours",
-      isOverdue: false,
-      isCompleted: false,
-    };
-    setTasks((prev) => [newTask, ...prev]);
     setCurrentTab("pipeline");
   };
 
-  // Tasks
-  const handleCompleteTask = (taskId: string) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, isCompleted: true } : t)),
-    );
+  const handleAddTaskTrigger = async (trigger: TaskTrigger) => {
+    await addTask({
+      title: trigger.title,
+      dueDate: new Date(Date.now() + trigger.slaHours * 3600 * 1000).toISOString(),
+      priority: "Medium",
+      assignedAdvisor: user?.role === "advisor" ? user.id : null,
+    });
   };
 
-  // Email Templates
-  const handleUpdateEmailTemplate = (tpl: EmailTemplate) => {
-    setEmailTemplates((prev) => prev.map((t) => (t.id === tpl.id ? tpl : t)));
+  const clientIdForLead = (leadId: string): string | null => {
+    const match = leads.find((lead) => lead.id === leadId);
+    return match?.clientId ?? null;
   };
 
-  const handleAddEmailTemplate = (tpl: EmailTemplate) => {
-    setEmailTemplates((prev) => [tpl, ...prev]);
+  const handleAddDocument = async (document: DocumentItem) => {
+    const clientId = clientIdForLead(document.leadId);
+    if (!clientId) {
+      reportActionError(
+        "Documents belong to a client dossier. Convert this lead into a client first.",
+      );
+      return;
+    }
+    await addDocument({
+      clientId,
+      documentType: document.category,
+      file: sampleDocumentFile(document.name),
+    });
   };
 
-  // Task Triggers
-  const handleAddTaskTrigger = (trig: TaskTrigger) => {
-    setTaskTriggers((prev) => [trig, ...prev]);
+  const handleClientUpload = async (
+    docName: string,
+    category: DocumentItem["category"],
+  ) => {
+    const clientId = clientPortalLead?.clientId ?? null;
+    if (!clientId) {
+      reportActionError(
+        "No client dossier is linked to this account yet. Your advisor will create it.",
+      );
+      return;
+    }
+    await addDocument({
+      clientId,
+      documentType: category,
+      file: sampleDocumentFile(docName),
+    });
   };
 
-  // Current Client for Client Portal view
-  const activeClientLead =
-    leads.find((l) => l.brokerageId === activeBrokerage.id && l.isClient) ||
-    leads.find((l) => l.brokerageId === activeBrokerage.id) ||
-    leads[0];
+  /** The dossier shown in the client portal. */
+  const clientPortalLead = useMemo<Lead | null>(() => {
+    if (!user) return null;
+    if (permissions.isClient) {
+      const clientId = documents[0]?.leadId ?? "";
+      return {
+        id: clientId || "client-dossier",
+        brokerageId: user.brokerageId ?? "",
+        name: user.fullName,
+        email: user.email,
+        phone: "",
+        nationality: "—",
+        targetCity: "—",
+        loanAmountEur: 0,
+        propertyPriceEur: 0,
+        employmentStatus: "—",
+        source: "Client Portal",
+        stage: "doc_gathering",
+        assignedAdvisorId: "",
+        createdAt: "—",
+        updatedAt: "—",
+        isClient: true,
+        clientId: clientId || null,
+        notesCount: 0,
+      };
+    }
+    return clients[0] ?? null;
+  }, [clients, documents, permissions.isClient, user]);
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-slate-800 font-sans flex flex-col relative selection:bg-rose-500/20 selection:text-slate-900">
@@ -273,90 +255,151 @@ export default function App() {
       <Navigation
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
-        activeRole={activeRole}
-        setActiveRole={setActiveRole}
-        activeBrokerage={activeBrokerage}
-        setActiveBrokerage={setActiveBrokerage}
-        brokerages={brokerages}
+        activeRole={role}
+        activeBrokerage={brokerage}
+        brokerages={[brokerage]}
         onOpenIngestModal={() => setIsIngestModalOpen(true)}
         soundEnabled={soundEnabled}
-        setSoundEnabled={setSoundEnabled}
-        liveSyncActive={liveSyncActive}
-        setLiveSyncActive={setLiveSyncActive}
+        setSoundEnabled={applySoundPreference}
+        liveSyncActive={liveSyncEnabled}
+        setLiveSyncActive={setLiveSyncEnabled}
+        availableTabs={allowedTabs}
+        accountLabel={user ? `${user.fullName} · ${user.email}` : undefined}
+        onSignOut={signOut}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 pb-16">
-        {currentTab === "showcase" && (
-          <DesignShowcase
-            onExploreLivePipeline={() => setCurrentTab("pipeline")}
-            onExploreDocuments={() => setCurrentTab("documents")}
-            onViewDashboard={() => setCurrentTab("showcase")}
-          />
-        )}
+        {isLoading ? (
+          <div className={SHELL_PADDING}>
+            <LoadingPanel />
+          </div>
+        ) : permissions.isPlatformAdmin ? (
+          <div className={SHELL_PADDING}>
+            <EmptyPanel
+              title="No brokerage is attached to this account"
+              message="Every lead, client, document and task is isolated per brokerage, so a platform administrator has no tenant data to display. Sign in with a brokerage admin, advisor or client account to open a workspace."
+            />
+          </div>
+        ) : (
+          <>
+            {error && (
+              <div className={SHELL_PADDING}>
+                <ErrorPanel
+                  title="Some workspace data could not be loaded"
+                  message={error}
+                  onRetry={refresh}
+                />
+              </div>
+            )}
 
-        {currentTab === "pipeline" && (
-          <PipelineBoard
-            leads={leads}
-            activeBrokerage={activeBrokerage}
-            onMoveLead={handleMoveLead}
-            onConvertToClient={handleConvertToClient}
-            onOpenLeadDetails={(lead) => setSelectedLeadForDossier(lead)}
-            lastSimulatedEvent={lastSimulatedEvent}
-          />
-        )}
+            {actionError && (
+              <div className={SHELL_PADDING}>
+                <InlineBanner
+                  tone="error"
+                  message={actionError}
+                  onDismiss={clearActionError}
+                />
+              </div>
+            )}
 
-        {currentTab === "documents" && (
-          <DocumentVerificationHub
-            documents={documents}
-            leads={leads}
-            activeBrokerage={activeBrokerage}
-            onUpdateDocument={handleUpdateDocument}
-            onAddDocument={handleAddDocument}
-          />
-        )}
+            {isEmpty && !permissions.isClient && (
+              <div className={SHELL_PADDING}>
+                <EmptyPanel
+                  title={`No ${brokerage.name} data yet`}
+                  message="Nothing has been created for your brokerage yet. Ingest your first lead to populate the pipeline, documents and automations."
+                  action={
+                    permissions.canIngestLeads ? (
+                      <button
+                        onClick={() => setIsIngestModalOpen(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-colors cursor-pointer"
+                      >
+                        <span>Simulate inbound lead</span>
+                      </button>
+                    ) : undefined
+                  }
+                />
+              </div>
+            )}
 
-        {currentTab === "analytics" && (
-          <DashboardAnalytics
-            activeBrokerage={activeBrokerage}
-            leads={leads}
-            tasks={tasks}
-          />
-        )}
+            {currentTab === "showcase" && (
+              <DesignShowcase
+                onExploreLivePipeline={() => setCurrentTab("pipeline")}
+                onExploreDocuments={() => setCurrentTab("documents")}
+                onViewDashboard={() => setCurrentTab("showcase")}
+              />
+            )}
 
-        {currentTab === "automations" && (
-          <AdminAutomations
-            emailTemplates={emailTemplates}
-            onUpdateEmailTemplate={handleUpdateEmailTemplate}
-            onAddEmailTemplate={handleAddEmailTemplate}
-            taskTriggers={taskTriggers}
-            onAddTaskTrigger={handleAddTaskTrigger}
-            tasks={tasks}
-            onCompleteTask={handleCompleteTask}
-            activeBrokerage={activeBrokerage}
-          />
-        )}
+            {currentTab === "pipeline" && permissions.canViewWorkspace && (
+              <PipelineBoard
+                leads={leads}
+                activeBrokerage={brokerage}
+                onMoveLead={handleMoveLead}
+                onConvertToClient={handleConvertToClient}
+                onOpenLeadDetails={(lead) => setSelectedLeadForDossier(lead)}
+                lastSimulatedEvent={lastEvent}
+              />
+            )}
 
-        {currentTab === "client_portal" && (
-          <ClientPortal
-            currentClient={activeClientLead}
-            documents={documents}
-            brokerage={activeBrokerage}
-            advisors={ADVISORS}
-            onUploadDocument={handleClientUpload}
-          />
+            {currentTab === "documents" && (
+              <DocumentVerificationHub
+                documents={documents}
+                leads={leads}
+                activeBrokerage={brokerage}
+                onUpdateDocument={updateDocument}
+                onAddDocument={handleAddDocument}
+              />
+            )}
+
+            {currentTab === "analytics" && permissions.canViewWorkspace && (
+              <DashboardAnalytics
+                activeBrokerage={brokerage}
+                leads={leads}
+                tasks={tasks}
+              />
+            )}
+
+            {currentTab === "automations" && permissions.canViewWorkspace && (
+              <AdminAutomations
+                emailTemplates={emailTemplates}
+                onUpdateEmailTemplate={saveTemplate}
+                onAddEmailTemplate={addTemplate}
+                taskTriggers={taskTriggers}
+                onAddTaskTrigger={handleAddTaskTrigger}
+                tasks={tasks}
+                onCompleteTask={completeTask}
+                activeBrokerage={brokerage}
+              />
+            )}
+
+            {currentTab === "client_portal" &&
+              (clientPortalLead ? (
+                <ClientPortal
+                  currentClient={clientPortalLead}
+                  documents={documents}
+                  brokerage={brokerage}
+                  advisors={advisors}
+                  onUploadDocument={handleClientUpload}
+                />
+              ) : (
+                <div className={SHELL_PADDING}>
+                  <EmptyPanel
+                    title="No client dossier yet"
+                    message="A client portal appears here once a lead has been converted into a client. Your advisor creates the dossier and links it to your account."
+                  />
+                </div>
+              ))}
+          </>
         )}
       </main>
 
-      {/* Inbound Lead Ingestion Modal (Requirement 2 & 4) */}
+      {/* Inbound Lead Ingestion Modal */}
       <LeadIngestionModal
-        isOpen={isIngestModalOpen}
+        isOpen={isIngestModalOpen && permissions.canIngestLeads}
         onClose={() => setIsIngestModalOpen(false)}
         onIngestLead={handleIngestLead}
-        activeBrokerage={activeBrokerage}
-        existingLeads={leads.filter(
-          (l) => l.brokerageId === activeBrokerage.id,
-        )}
+        activeBrokerage={brokerage}
+        existingLeads={leads}
       />
 
       {/* Lead Dossier Modal */}
@@ -366,7 +409,7 @@ export default function App() {
         onConvertToClient={handleConvertToClient}
         documents={documents}
         tasks={tasks}
-        brokerage={activeBrokerage}
+        brokerage={brokerage}
       />
 
       {/* Footer */}
@@ -382,10 +425,15 @@ export default function App() {
           <div className="flex items-center gap-4">
             <span>LeadFlow Mortgage Workspace</span>
             <span>·</span>
-            <span>Active Tenant: {activeBrokerage.name}</span>
+            <span>Active Tenant: {brokerage.name}</span>
+            <span>·</span>
+            <span>Live sync: {liveSyncEnabled ? socketStatus : "paused"}</span>
           </div>
         </div>
       </footer>
     </div>
   );
 }
+
+
+
