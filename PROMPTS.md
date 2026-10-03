@@ -479,3 +479,44 @@ Respect brokerage isolation.
 
 Test the major user flows and fix errors.
 Commit changes.
+
+Perform a final LeadFlow assignment audit.
+
+Do not redesign the frontend.
+
+Verify the complete system against these requirements:
+
+- multi-tenant brokerage isolation
+- platform admin
+- brokerage admin
+- advisor
+- client
+- authentication and authorization
+- external lead webhook
+- live lead pipeline
+- duplicate lead detection
+- lead → client conversion
+- client login
+- document upload
+- background document verification
+- live document status
+- dashboard
+- email templates
+- pipeline email triggers
+- tasks
+- pipeline task triggers
+- overdue tasks
+- Socket.IO updates
+- security/IDOR protection
+
+Test the main workflows end-to-end.
+
+Fix only genuine missing or broken functionality.
+
+Check that no brokerage can access another brokerage's users, leads, clients, tasks or documents.
+
+Run typecheck/build/tests and fix errors.
+
+Do not rewrite working functionality unnecessarily.
+
+Update PROMPTS.md and commit the final changes.
