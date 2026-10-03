@@ -54,6 +54,19 @@ Say: *"I decided what each role can do and enforced it on both the frontend and 
 
 The frontend mirrors this in `permissionsForRole` (AuthContext), and the API enforces it with `requireRoles(...)` on each router. Both layers agree — the frontend hides what the API also refuses.
 
+**Role is server-authoritative.** The navbar role dropdown is `disabled`, and there is deliberately **no** endpoint that can change a role — a user cannot promote themselves, which is the point. `GET /api/auth/me` re-reads the account on every request, so a role change takes effect on the next request.
+
+That means you cannot create the second advisor seat from the UI, so `scripts/user-admin.mjs` writes straight to MongoDB for demo setup:
+
+```bash
+node scripts/user-admin.mjs list
+node scripts/user-admin.mjs create-advisor <brokerageId> advisor@yourfirm.com 'Casey Advisor' somepassword
+node scripts/user-admin.mjs set-role <email> advisor [brokerageId]
+node scripts/user-admin.mjs remove <email>
+```
+
+> Gotcha worth knowing: `brokerageId` is required for every role **except** `platform_admin`, so promoting to `platform_admin` clears it. Demoting back therefore needs the brokerage id passed explicitly, or the account authenticates but gets `403` on every tenant-scoped route. The script refuses the demotion and tells you rather than leaving you with a broken account.
+
 ---
 
 ## 3. Running it for the demo
