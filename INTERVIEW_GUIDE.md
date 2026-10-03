@@ -85,7 +85,13 @@ Then open `http://localhost:3000`. (If you deployed, use the deployed URL and yo
 3. **Fire the webhook** (second terminal) → the new lead appears on the board **without refreshing**.
 4. **Fire the same lead again** → show the **duplicate** response.
 5. **Drag/advance a lead through stages** → point out the **email** + **task** that fire, and the **dashboard** number changing live.
-6. **Convert a lead to a client** → copy the activation token → **activate** → **log in as the client**.
+6. **Convert a lead to a client** → copy the activation token → **activate** → **log in as the client**. Run the whole chain in one command:
+
+   ```bash
+   node scripts/demo.mjs your@email.com 'your-password'
+   ```
+
+   It signs in, converts the first unconverted lead, prints the one-time activation token, activates the client and signs them in — printing every response so you can talk over the raw HTTP calls. The UI deliberately does not show the token (it is meant to be emailed, like a password-reset link), so this step has to be driven from the API.
 7. As the client, **upload a document** → watch it go **Processing → In Review → Verified/Failed** live; flip to the advisor screen and show the same status updating.
 8. **Open a second browser window** side-by-side to prove the live multi-screen sync.
 9. **Show the dashboard**, the **email templates** admin screen, and the **overdue task** highlight.
