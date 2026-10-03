@@ -6,6 +6,7 @@ import { LEAD_STAGES, LeadModel, type LeadStage } from "../models/Lead.js";
 import { UserModel } from "../models/User.js";
 import type { AuthContext } from "../types/auth.js";
 import { normalizeEmail, normalizePhone } from "../utils/leadIdentity.js";
+import { dossierOwnerFilter } from "../utils/tenantAccess.js";
 import { hashPassword } from "./authService.js";
 
 const activationLifetimeMs = 24 * 60 * 60 * 1000;
@@ -71,10 +72,14 @@ export async function convertLeadToClient(
     throw serviceError("Lead has already been converted to a client.", 409);
   }
 
+  // Fall back to whoever is doing the converting: an explicit advisorId, then
+  // the lead's existing assignee, then the signed-in brokerage staff member.
   const advisorIdValue =
     input.advisorId ??
     lead.assignedAdvisor?.toString() ??
-    (input.auth.role === "advisor" ? input.auth.userId : undefined);
+    (input.auth.role === "advisor" || input.auth.role === "brokerage_admin"
+      ? input.auth.userId
+      : undefined);
   if (!advisorIdValue || !Types.ObjectId.isValid(advisorIdValue)) {
     throw serviceError(
       "Assign an advisor to the lead before converting it.",
@@ -84,8 +89,7 @@ export async function convertLeadToClient(
   const advisorId = new Types.ObjectId(advisorIdValue);
   const advisorExists = await UserModel.exists({
     _id: advisorId,
-    brokerageId,
-    role: "advisor",
+    ...dossierOwnerFilter(brokerageId),
   });
   if (!advisorExists) {
     throw serviceError(

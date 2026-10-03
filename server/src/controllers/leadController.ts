@@ -8,6 +8,7 @@ import { applyPipelineAutomation } from "../services/taskAutomationService.js";
 import { applyPipelineEmailAutomation } from "../services/pipelineEmailService.js";
 import { publishDashboardStats } from "../services/dashboardService.js";
 import { buildLeadListFilter, getLeadTenantId } from "../utils/leadQuery.js";
+import { dossierOwnerFilter } from "../utils/tenantAccess.js";
 import {
   normalizeEmail,
   normalizeLeadName,
@@ -195,8 +196,7 @@ async function validateAdvisor(
   return Boolean(
     await UserModel.exists({
       _id: advisorId,
-      brokerageId,
-      role: "advisor",
+      ...dossierOwnerFilter(brokerageId),
     }),
   );
 }

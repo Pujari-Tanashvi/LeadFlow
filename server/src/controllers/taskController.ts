@@ -12,6 +12,7 @@ import {
 import { UserModel } from "../models/User.js";
 import { emitTaskEvent } from "../sockets/index.js";
 import { isTaskOverdue } from "../utils/taskOverdue.js";
+import { dossierOwnerFilter } from "../utils/tenantAccess.js";
 import { parseTaskInput } from "../utils/taskInput.js";
 import { buildTaskListFilter, getTaskTenantId } from "../utils/taskQuery.js";
 
@@ -38,8 +39,7 @@ async function advisorInBrokerage(
   return Boolean(
     await UserModel.exists({
       _id: advisorId,
-      brokerageId,
-      role: "advisor",
+      ...dossierOwnerFilter(brokerageId),
     }),
   );
 }
