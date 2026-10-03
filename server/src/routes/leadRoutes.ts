@@ -17,16 +17,19 @@ import { requireLeadTenant } from "../middleware/leadTenantMiddleware.js";
 
 export const leadRoutes = Router();
 
-leadRoutes.use(requireAuthentication, requireLeadTenant);
+// Lead management is internal brokerage work: clients and platform admins have
+// no business here, so every route requires an advisor or brokerage admin of
+// the authenticated brokerage (mirrors tasks, dashboard and email templates).
+leadRoutes.use(
+  requireAuthentication,
+  requireLeadTenant,
+  requireRoles("brokerage_admin", "advisor"),
+);
 leadRoutes.get("/", listLeads);
 leadRoutes.post("/", createLead);
 leadRoutes.get("/:id", getLead);
 leadRoutes.post("/:id/merge", mergeLead);
-leadRoutes.post(
-  "/:id/convert",
-  requireRoles("brokerage_admin", "advisor"),
-  convertLead,
-);
+leadRoutes.post("/:id/convert", convertLead);
 leadRoutes.patch("/:id/stage", patchLeadStage);
 leadRoutes.patch("/:id", patchLead);
 leadRoutes.delete("/:id", deleteLead);
