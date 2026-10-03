@@ -12,7 +12,9 @@ const httpServer = createServer(app);
 
 async function startServer(): Promise<void> {
   if (!env.mongoUri) {
-    throw new Error("MONGODB_URI must be set before starting the API.");
+    throw new Error(
+      "MONGODB_URI is not set. Copy .env.example to .env, fill it in, and make sure MongoDB is running (e.g. `mongod --dbpath .mongo-data`).",
+    );
   }
 
   assertJwtConfiguration();

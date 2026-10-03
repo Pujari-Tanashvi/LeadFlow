@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import type { RequestHandler } from "express";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { documentRoutes } from "./routes/documentRoutes.js";
@@ -23,4 +24,16 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/email-templates", emailTemplateRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/documents", documentRoutes);
+
+// An unmatched `/api/*` path must still answer with the JSON envelope the
+// client parses, otherwise Express' default HTML error page is rendered as a
+// raw "Cannot GET ..." string and the real problem (a typo in the path, or a
+// route that no longer exists) is invisible in the UI.
+const notFound: RequestHandler = (request, response) => {
+  response.status(404).json({
+    error: `No API route matches ${request.method} ${request.originalUrl}.`,
+  });
+};
+
+app.use("/api", notFound);
 app.use(errorHandler);

@@ -72,6 +72,39 @@ function readErrorMessage(payload: unknown, fallback: string): string {
   return fallback;
 }
 
+/**
+ * Explain a status the user can actually act on.
+ *
+ * When the browser reaches the Vite dev server but the Express API is not
+ * running, the proxy answers 502/503/504 with an empty body. Surfacing the bare
+ * status makes it look like the login itself is broken, so it is translated
+ * into the actual cause: the API process is missing.
+ */
+function explainStatus(status: number): string {
+  switch (status) {
+    case 502:
+      return "The LeadFlow API is not running. Start it with `npm run dev` (which starts the API and the web server together).";
+    case 503:
+      return "The LeadFlow API is running but is not ready to serve requests yet. Wait a moment and try again.";
+    case 504:
+      return "The LeadFlow API took too long to respond. Check the API logs and that MongoDB is running.";
+    case 0:
+      return "The LeadFlow API is unreachable. Check that the server is running.";
+    default:
+      return `Request failed with status ${status}.`;
+  }
+}
+
+/** Prefer the server's own message; fall back to an actionable explanation. */
+function describeFailure(
+  payload: unknown,
+  status: number,
+  subject: string,
+): string {
+  const parsed = readErrorMessage(payload, "");
+  return parsed || `${subject} ${explainStatus(status)}`.trim();
+}
+
 async function parseBody(response: Response): Promise<unknown> {
   if (response.status === 204) return undefined;
   const text = await response.text();
@@ -141,7 +174,7 @@ export async function apiRequest<T>(
       onUnauthorized();
     }
     throw new ApiError(
-      readErrorMessage(payload, `Request failed with status ${response.status}.`),
+      describeFailure(payload, response.status, "Request failed."),
       response.status,
       payload,
     );
@@ -162,7 +195,7 @@ export async function apiDownload(
       onUnauthorized();
     }
     throw new ApiError(
-      readErrorMessage(payload, `Download failed with status ${response.status}.`),
+      describeFailure(payload, response.status, "Download failed."),
       response.status,
       payload,
     );
@@ -188,7 +221,7 @@ export async function apiUpload<T>(
   if (!response.ok) {
     if (response.status === 401) onUnauthorized();
     throw new ApiError(
-      readErrorMessage(payload, `Upload failed with status ${response.status}.`),
+      describeFailure(payload, response.status, "Upload failed."),
       response.status,
       payload,
     );
