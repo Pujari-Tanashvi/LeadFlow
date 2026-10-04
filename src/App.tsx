@@ -217,7 +217,10 @@ function Workspace() {
   const clientPortalLead = useMemo<Lead | null>(() => {
     if (!user) return null;
     if (permissions.isClient) {
-      const clientId = documents[0]?.leadId ?? "";
+      // Prefer the dossier id the API attaches to the client account so a newly
+      // activated client can upload before any document exists; fall back to an
+      // existing document's owner id for older sessions.
+      const clientId = user.clientId ?? documents[0]?.leadId ?? "";
       return {
         id: clientId || "client-dossier",
         brokerageId: user.brokerageId ?? "",

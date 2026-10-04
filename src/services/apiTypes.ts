@@ -22,6 +22,8 @@ export interface ApiUser {
   role: ApiUserRole;
   brokerageId: string | null;
   brokerage: ApiBrokerageRef | null;
+  /** Present for client accounts: the id of the client's own dossier. */
+  clientId?: string | null;
 }
 
 export interface ApiAuthResponse {

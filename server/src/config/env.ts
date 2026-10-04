@@ -10,9 +10,25 @@ const emailPort = process.env.EMAIL_SMTP_PORT
   ? Number(process.env.EMAIL_SMTP_PORT)
   : undefined;
 
+const nodeEnv = process.env.NODE_ENV ?? "development";
+
+// In a single-service deployment the browser is served from the same origin as
+// the API, so the allowed origin is the deployment URL. Render injects that as
+// RENDER_EXTERNAL_URL, which we fall back to when FRONTEND_ORIGIN is not set.
+const frontendOrigin =
+  process.env.FRONTEND_ORIGIN ??
+  process.env.RENDER_EXTERNAL_URL ??
+  "http://localhost:3000";
+
 export const env = {
   port,
-  frontendOrigin: process.env.FRONTEND_ORIGIN ?? "http://localhost:3000",
+  nodeEnv,
+  isProduction: nodeEnv === "production",
+  // Serve the built frontend from Express when running the production bundle
+  // (one web service hosts the API, the static app and the Socket.IO channel).
+  serveClient:
+    nodeEnv === "production" || process.env.SERVE_CLIENT === "true",
+  frontendOrigin,
   mongoUri: process.env.MONGODB_URI,
   jwtSecret: process.env.JWT_SECRET,
   leadWebhookSecret: process.env.LEAD_WEBHOOK_SECRET,

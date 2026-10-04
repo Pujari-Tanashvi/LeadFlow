@@ -11,10 +11,15 @@
     "build": "vite build && npm run build:server",
     "build:server": "tsc -p server/tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p server/tsconfig.json",
+    "start": "NODE_ENV=production node server/dist/index.js",
     "start:server": "node server/dist/index.js",
+    "seed": "node scripts/seed-demo.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20.19.0"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

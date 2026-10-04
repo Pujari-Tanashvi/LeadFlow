@@ -1,0 +1,42 @@
+# Render Blueprint for LeadFlow.
+# One free Node web service hosts the Express API, the built React app and the
+# Socket.IO live channel on a single origin. See DEPLOYMENT.md for the full
+# walkthrough (MongoDB Atlas setup, env vars, seeding the demo logins).
+# Blueprint spec: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: leadflow
+    runtime: node
+    plan: free
+    # --include=dev forces devDependencies (vite + the TypeScript compiler) to
+    # install even if Render sets NODE_ENV=production, which would otherwise make
+    # npm skip them and break the build.
+    buildCommand: npm install --include=dev && npm run build
+    # NODE_ENV is set on the start command (not as an env var) so it applies at
+    # runtime only, keeping devDependencies available during the build above.
+    # At runtime it makes Express serve the built frontend from dist/.
+    startCommand: NODE_ENV=production node server/dist/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22.12.0"
+      # Generated once by Render and kept stable across deploys (>= 32 chars).
+      - key: JWT_SECRET
+        generateValue: true
+      # Paste your MongoDB Atlas SRV connection string (includes the db name).
+      - key: MONGODB_URI
+        sync: false
+      # A long (>= 32 char) shared secret; also configure it in the external
+      # lead tool that POSTs to /api/webhooks/leads.
+      - key: LEAD_WEBHOOK_SECRET
+        sync: false
+      # The brokerage that inbound webhook leads attach to. Only exists after
+      # seeding — set it to the demo brokerage id the seed script prints, then
+      # redeploy. Leaving it unset only disables the webhook (returns 503).
+      - key: LEAD_WEBHOOK_BROKERAGE_ID
+        sync: false
+      - key: EMAIL_FROM
+        value: no-reply@leadflow.local
+      # FRONTEND_ORIGIN is optional for this single service: when unset the API
+      # falls back to RENDER_EXTERNAL_URL (the service's own URL), which is the
+      # correct same-origin value for CORS and the Socket.IO handshake.

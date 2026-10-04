@@ -520,3 +520,28 @@ Run typecheck/build/tests and fix errors.
 Do not rewrite working functionality unnecessarily.
 
 Update PROMPTS.md and commit the final changes.
+
+---
+
+1. Serve many brokerages from one deployment. Each brokerage sees only its own users, leads, clients and documents, never another brokerage's.
+2. Receive leads automatically from at least one real external tool.
+3. Give advisors a pipeline board (New → Contacted → … → Won or Lost) that updates live on every open screen when anything changes.
+4. Notice when a new lead is a person the brokerage already knows.
+5. Let an advisor turn a lead into a client who can log in, see their case and upload documents.
+6. Check uploaded documents in the background and show each document's status live to the client and the advisor. You can fake the checking itself; make it slow and let it fail sometimes.
+7. Show a dashboard of pipeline numbers that loads fast and is never out of date.
+8. Email templates. Let a brokerage admin create and edit email templates with placeholders such as the client's name or the advisor's name.
+9. Email triggers on the pipeline. When a lead enters a pipeline stage, send the email the admin has linked to that stage, for example a welcome email when a lead lands in New.
+10. Task triggers on pipeline columns. When a lead enters a column, create the tasks the admin has set up for that column, for example "Call within 2 hours" when a lead lands in New. Each task has an assigned advisor and a due date, and overdue tasks stand out.
+There are four kinds of users: platform admin, brokerage admin, advisor and client. You decide exactly what each can do. all of these should be present in current project..uploading documents should be real not just frontend, check for other roles too how to login for other roles how will dashboard change. • What happens if the same lead is sent twice, or 500 arrive in one minute?
+• What if two advisors move the same lead at the same moment?
+• What if the background worker crashes halfway through a job?
+• What if the email provider is down when a lead changes stage?
+• If one brokerage fl oods the system, do the others slow down?
+• What if someone guesses the id of another brokerage's lead?
+• What if an advisor's internet drops for two minutes?
+What to submit
+Send these within 7 days of receiving this brief:
+1. GitHub repository with its full commit history.
+2. Deployed link with test logins for each kind of user. , send a screen recording with voice-over (10–15 minutes) , showing the product working. 3. All your prompts (mandatory). Every prompt you gave any AI tool, in order and unedited, including the ones that did not work. Put them in PROMPTS.md or attach the tool's exports. Submissions without prompts are not reviewed.
+4. Two-paragraph summary. First, what you built and your key decisions. Second, what is missing or weak and what you would do next., after everything working push the code to github at https://github.com/Pujari-Tanashvi/LeadFlow and deploy the project but in contibutors only one person should be there thats me no name of claude should be shown

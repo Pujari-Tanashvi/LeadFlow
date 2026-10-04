@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { BrokerageModel } from "../models/Brokerage.js";
+import { ClientModel } from "../models/Client.js";
 import { UserModel, type UserRole } from "../models/User.js";
 import {
   assertJwtConfiguration,
@@ -26,6 +27,11 @@ export interface AuthenticatedUser {
   fullName: string;
   role: UserRole;
   brokerageId: string | null;
+  /**
+   * For a client account, the id of its own dossier so the client portal can
+   * file uploads against it before any document exists. Null for staff roles.
+   */
+  clientId: string | null;
   /**
    * Denormalized brokerage identity so the client never has to guess which
    * tenant it is operating in. Always derived from the signed-in account.
@@ -70,8 +76,25 @@ function toAuthenticatedUser(user: {
     fullName: user.fullName,
     role: user.role,
     brokerageId: user.brokerageId?.toString() ?? null,
+    clientId: null,
     brokerage: toBrokerage(user.brokerageId),
   };
+}
+
+/**
+ * The dossier id for a client account, needed by the client portal so a newly
+ * activated client can upload before any document exists. Staff roles have no
+ * client dossier, so this is only looked up for the client role.
+ */
+async function clientIdFor(
+  userId: { toString(): string },
+  brokerageId: string | null,
+): Promise<string | null> {
+  if (!brokerageId) return null;
+  const client = await ClientModel.findOne({ userId, brokerageId })
+    .select("_id")
+    .exec();
+  return client ? client._id.toString() : null;
 }
 
 /** Resolve the brokerage name for a user document whose ref is not populated. */
@@ -153,6 +176,9 @@ export async function login(
 
   const safeUser = toAuthenticatedUser(user);
   safeUser.brokerage = await brokerageFor(user);
+  if (safeUser.role === "client") {
+    safeUser.clientId = await clientIdFor(user._id, safeUser.brokerageId);
+  }
   return { user: safeUser, token: createAccessToken(safeUser.id) };
 }
 
@@ -194,5 +220,8 @@ export async function getAuthenticatedUser(
   // instead of populating (and object-ifying) the reference.
   const safeUser = toAuthenticatedUser(user);
   safeUser.brokerage = await brokerageFor(user);
+  if (safeUser.role === "client") {
+    safeUser.clientId = await clientIdFor(user._id, safeUser.brokerageId);
+  }
   return safeUser;
 }

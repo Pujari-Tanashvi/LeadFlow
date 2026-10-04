@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import path from "node:path";
 import type { RequestHandler } from "express";
 import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -36,4 +37,17 @@ const notFound: RequestHandler = (request, response) => {
 };
 
 app.use("/api", notFound);
+
+// In production the same web service also serves the built React app. The API
+// routes above are matched first, so this only ever handles non-API requests.
+// Any unmatched GET falls back to index.html so the single-page app can boot
+// and resolve its own view (deep links included).
+if (env.serveClient) {
+  const clientDir = path.resolve(process.cwd(), "dist");
+  app.use(express.static(clientDir));
+  app.get("*", (_request, response) => {
+    response.sendFile(path.join(clientDir, "index.html"));
+  });
+}
+
 app.use(errorHandler);
